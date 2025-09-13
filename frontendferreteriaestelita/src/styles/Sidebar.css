@@ -1,0 +1,12 @@
+/* Sidebar.css */
+.nav-link:hover {
+  background-color: #00bfff !important; /* Celeste */
+  color: black !important;              /* Texto contraste */
+  border-radius: 4px;                   /* Opcional */
+  transition: 0.3s;
+}
+
+.bg-dark-celeste {
+  background-color: #00bfff !important; /* Sidebar base celeste */
+  color: black !important;
+}
