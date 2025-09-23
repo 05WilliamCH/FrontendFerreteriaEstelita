@@ -80,10 +80,19 @@ const Sidebar = () => {
         {/* Inventario → Administrador y Contador */}
         {(rol === "1" || rol === "2") && (
           <li>
-            <Link to="/inventario" className="nav-link text-white d-flex align-items-center">
+            <button
+              className="nav-link text-white dropdown-toggle d-flex align-items-center"
+              onClick={() => toggleSubmenu("inventario")}
+              style={{ border: "none", background: "transparent", width: "100%", textAlign: "left" }}
+            >
               <i className="bi bi-box-seam me-2"></i>
               {!isCollapsed && "Inventario"}
-            </Link>
+            </button>
+            <div className={`collapse ${openSubmenu === "inventario" && !isCollapsed ? "show" : ""}`}>
+              <ul className="btn-toggle-nav list-unstyled fw-normal small">
+                <li><Link to="/inventario/productos" className="nav-link text-white ms-4">Productos</Link></li>
+              </ul>
+            </div>
           </li>
         )}
 
@@ -149,14 +158,43 @@ const Sidebar = () => {
         )}
 
         {/* Reportes → Solo Administrador */}
-        {rol === "1" && (
-          <li>
-            <Link to="/reportes" className="nav-link text-white d-flex align-items-center">
-              <i className="bi bi-file-earmark-text me-2"></i>
-              {!isCollapsed && "Reportes"}
-            </Link>
-          </li>
-        )}
+{rol === "1" && (
+  <li>
+    <button
+      className="nav-link text-white dropdown-toggle d-flex align-items-center"
+      onClick={() => toggleSubmenu("reportes")}
+      style={{ border: "none", background: "transparent", width: "100%", textAlign: "left" }}
+    >
+      <i className="bi bi-file-earmark-text me-2"></i>
+      {!isCollapsed && "Reportes"}
+    </button>
+    <div className={`collapse ${openSubmenu === "reportes" && !isCollapsed ? "show" : ""}`}>
+      <ul className="btn-toggle-nav list-unstyled fw-normal small">
+        <li>
+          <Link to="/reportes/categorias" className="nav-link text-white ms-4">
+            Reporte de Categorias
+          </Link>
+        </li>
+        <li>
+          <Link to="/reportes/proveedores" className="nav-link text-white ms-4">
+            Reporte de Proveedores
+          </Link>
+        </li>
+        <li>
+          <Link to="/reportes/clientes" className="nav-link text-white ms-4">
+            Reporte de Clientes
+          </Link>
+        </li>
+        <li>
+          <Link to="/reportes/utilidades" className="nav-link text-white ms-4">
+            Reporte de Productos
+          </Link>
+        </li>
+      </ul>
+    </div>
+  </li>
+)}
+
 
         {/* Footer → Logout */}
         <hr />

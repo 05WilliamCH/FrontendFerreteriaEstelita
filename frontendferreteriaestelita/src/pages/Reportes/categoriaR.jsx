@@ -3,15 +3,15 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-const ReporteProveedoresPDF = () => {
-  const [proveedores, setProveedores] = useState([]);
+const ReporteCategoriasPDF = () => {
+  const [categorias, setCategorias] = useState([]);
   const [fechaInicio, setFechaInicio] = useState("");
   const [fechaFin, setFechaFin] = useState("");
 
   useEffect(() => {
     const token = localStorage.getItem("token");
 
-    fetch("http://localhost:3000/api/proveedores", {
+    fetch("http://localhost:3000/api/categorias", {
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`,
@@ -22,28 +22,28 @@ const ReporteProveedoresPDF = () => {
         return res.json();
       })
       .then((data) => {
-        if (Array.isArray(data)) setProveedores(data);
-        else setProveedores([]);
+        if (Array.isArray(data)) setCategorias(data);
+        else setCategorias([]);
       })
-      .catch((err) => console.error("Error al cargar proveedores:", err));
+      .catch((err) => console.error("Error al cargar categorías:", err));
   }, []);
 
-  // Filtrar por fecha
-  const proveedoresFiltrados = Array.isArray(proveedores)
-    ? proveedores.filter((p) => {
-        const fechaProveedor = p.fechacreacion
-          ? new Date(p.fechacreacion)
-          : null;
+  // Filtrar por fecha solamente
+const categoriasFiltradas = Array.isArray(categorias)
+  ? categorias.filter((c) => {
+      const fechaCategoria = new Date(c.fechacreacion);
 
-        const inicio = fechaInicio ? new Date(fechaInicio + "T00:00:00") : null;
-        const fin = fechaFin ? new Date(fechaFin + "T23:59:59") : null;
+      // Normalizar fechas
+      const inicio = fechaInicio ? new Date(fechaInicio + "T00:00:00") : null;
+      const fin = fechaFin ? new Date(fechaFin + "T23:59:59") : null;
 
-        return (
-          (!inicio || (fechaProveedor && fechaProveedor >= inicio)) &&
-          (!fin || (fechaProveedor && fechaProveedor <= fin))
-        );
-      })
-    : [];
+      return (
+        (!inicio || fechaCategoria >= inicio) &&
+        (!fin || fechaCategoria <= fin)
+      );
+    })
+  : [];
+
 
   // Formatear fecha
   const formatearFecha = (fecha) => {
@@ -63,17 +63,14 @@ const ReporteProveedoresPDF = () => {
     const fechaActual = new Date().toLocaleString("es-ES");
 
     doc.setFontSize(16);
-    doc.text("Reporte de Proveedores", 14, 20);
+    doc.text("Reporte de Categorías", 14, 20);
     doc.setFontSize(11);
     doc.text(`Fecha de reporte: ${fechaActual}`, 14, 28);
 
-    const tableColumn = ["Nombre", "Teléfono", "Dirección", "NIT", "Fecha de Creación"];
-    const tableRows = proveedoresFiltrados.map((p) => [
-      p.nombre || "-",
-      p.telefono || "-",
-      p.direccion || "-",
-      p.nit || "-",
-      formatearFecha(p.fechacreacion),
+    const tableColumn = ["Nombre Categoría", "Fecha de Creación"];
+    const tableRows = categoriasFiltradas.map((c) => [
+      c.nombre || "-", // <-- usamos "nombre"
+      formatearFecha(c.fechacreacion),
     ]);
 
     autoTable(doc, {
@@ -83,16 +80,17 @@ const ReporteProveedoresPDF = () => {
       styles: { fontSize: 10 },
     });
 
-    doc.save("reporte_proveedores.pdf");
+    doc.save("reporte_categorias.pdf");
   };
 
+  // Imprimir tabla
   const imprimir = () => {
     window.print();
   };
 
   return (
     <div className="container mt-5">
-      <h2>Reporte de Proveedores</h2>
+      <h2>Reporte de Categorías</h2>
 
       {/* Filtros de fecha */}
       <div className="row mb-3">
@@ -130,28 +128,22 @@ const ReporteProveedoresPDF = () => {
       <table className="table table-bordered">
         <thead className="table-dark">
           <tr>
-            <th>Nombre</th>
-            <th>Teléfono</th>
-            <th>Dirección</th>
-            <th>NIT</th>
+            <th>Nombre Categoría</th>
             <th>Fecha de Creación</th>
           </tr>
         </thead>
         <tbody>
-          {proveedoresFiltrados.length > 0 ? (
-            proveedoresFiltrados.map((p) => (
-              <tr key={p.idprov}>
-                <td>{p.nombre || "-"}</td>
-                <td>{p.telefono || "-"}</td>
-                <td>{p.direccion || "-"}</td>
-                <td>{p.nit || "-"}</td>
-                <td>{formatearFecha(p.fechacreacion)}</td>
+          {categoriasFiltradas.length > 0 ? (
+            categoriasFiltradas.map((c) => (
+              <tr key={c.idcategoria}>
+                <td>{c.nombre || "-"}</td>
+                <td>{formatearFecha(c.fechacreacion)}</td>
               </tr>
             ))
           ) : (
             <tr>
-              <td colSpan="5" className="text-center">
-                No hay proveedores para mostrar
+              <td colSpan="2" className="text-center">
+                No hay categorías para mostrar
               </td>
             </tr>
           )}
@@ -161,4 +153,4 @@ const ReporteProveedoresPDF = () => {
   );
 };
 
-export default ReporteProveedoresPDF;
+export default ReporteCategoriasPDF;

@@ -16,7 +16,15 @@ import Devoluciones from "./pages/Devoluciones";
 
 import Compra from "./pages/Compra";
 
+import Productos from "./pages/Producto";
+
+
 import ReporteUsuarios from "./pages/Reportes/usuariosR";
+import ReporteCategorias from "./pages/Reportes/categoriaR";
+import ReporteProveedores from "./pages/Reportes/proveedorR";
+import ReporteClientes from "./pages/Reportes/clienteR";
+
+import Reportes from "./pages/Reportes";
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
@@ -111,6 +119,18 @@ function App() {
             />
           }
         />
+        <Route
+          path="/inventario/productos"
+          element={
+            <PrivateRoute
+              element={
+                <DashboardLayout>
+                  <Productos />
+                </DashboardLayout>
+              }
+            />
+          }
+        />
          <Route
           path="/compras/categorias"
           element={
@@ -166,6 +186,42 @@ function App() {
               element={
                 <DashboardLayout>
                   <Devoluciones />
+                </DashboardLayout>
+              }
+            />
+          }
+        />
+         <Route
+          path="/reportes/categorias"
+          element={
+            <PrivateRoute
+              element={
+                <DashboardLayout>
+                  <ReporteCategorias />
+                </DashboardLayout>
+              }
+            />
+          }
+        />
+        <Route
+          path="/reportes/proveedores"
+          element={
+            <PrivateRoute
+              element={
+                <DashboardLayout>
+                  <ReporteProveedores />
+                </DashboardLayout>
+              }
+            />
+          }
+        />
+        <Route
+          path="/reportes/clientes"
+          element={
+            <PrivateRoute
+              element={
+                <DashboardLayout>
+                  <ReporteClientes />
                 </DashboardLayout>
               }
             />

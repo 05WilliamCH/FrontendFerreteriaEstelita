@@ -3,15 +3,15 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-const ReporteProveedoresPDF = () => {
-  const [proveedores, setProveedores] = useState([]);
+const ReporteClientesPDF = () => {
+  const [clientes, setClientes] = useState([]);
   const [fechaInicio, setFechaInicio] = useState("");
   const [fechaFin, setFechaFin] = useState("");
 
   useEffect(() => {
     const token = localStorage.getItem("token");
 
-    fetch("http://localhost:3000/api/proveedores", {
+    fetch("http://localhost:3000/api/clientes", {
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`,
@@ -22,25 +22,25 @@ const ReporteProveedoresPDF = () => {
         return res.json();
       })
       .then((data) => {
-        if (Array.isArray(data)) setProveedores(data);
-        else setProveedores([]);
+        if (Array.isArray(data)) setClientes(data);
+        else setClientes([]);
       })
-      .catch((err) => console.error("Error al cargar proveedores:", err));
+      .catch((err) => console.error("Error al cargar clientes:", err));
   }, []);
 
   // Filtrar por fecha
-  const proveedoresFiltrados = Array.isArray(proveedores)
-    ? proveedores.filter((p) => {
-        const fechaProveedor = p.fechacreacion
-          ? new Date(p.fechacreacion)
+  const clientesFiltrados = Array.isArray(clientes)
+    ? clientes.filter((c) => {
+        const fechaCliente = c.fechacreacion
+          ? new Date(c.fechacreacion)
           : null;
 
         const inicio = fechaInicio ? new Date(fechaInicio + "T00:00:00") : null;
         const fin = fechaFin ? new Date(fechaFin + "T23:59:59") : null;
 
         return (
-          (!inicio || (fechaProveedor && fechaProveedor >= inicio)) &&
-          (!fin || (fechaProveedor && fechaProveedor <= fin))
+          (!inicio || (fechaCliente && fechaCliente >= inicio)) &&
+          (!fin || (fechaCliente && fechaCliente <= fin))
         );
       })
     : [];
@@ -63,17 +63,18 @@ const ReporteProveedoresPDF = () => {
     const fechaActual = new Date().toLocaleString("es-ES");
 
     doc.setFontSize(16);
-    doc.text("Reporte de Proveedores", 14, 20);
+    doc.text("Reporte de Clientes", 14, 20);
     doc.setFontSize(11);
     doc.text(`Fecha de reporte: ${fechaActual}`, 14, 28);
 
-    const tableColumn = ["Nombre", "Teléfono", "Dirección", "NIT", "Fecha de Creación"];
-    const tableRows = proveedoresFiltrados.map((p) => [
-      p.nombre || "-",
-      p.telefono || "-",
-      p.direccion || "-",
-      p.nit || "-",
-      formatearFecha(p.fechacreacion),
+    const tableColumn = ["Nombre", "Teléfono", "Dirección", "Email", "NIT", "Fecha de Creación"];
+    const tableRows = clientesFiltrados.map((c) => [
+      c.nombre || "-",
+      c.telefono || "-",
+      c.direccion || "-",
+      c.email || "-",
+      c.nit || "-",
+      formatearFecha(c.fechacreacion),
     ]);
 
     autoTable(doc, {
@@ -83,7 +84,7 @@ const ReporteProveedoresPDF = () => {
       styles: { fontSize: 10 },
     });
 
-    doc.save("reporte_proveedores.pdf");
+    doc.save("reporte_clientes.pdf");
   };
 
   const imprimir = () => {
@@ -92,7 +93,7 @@ const ReporteProveedoresPDF = () => {
 
   return (
     <div className="container mt-5">
-      <h2>Reporte de Proveedores</h2>
+      <h2>Reporte de Clientes</h2>
 
       {/* Filtros de fecha */}
       <div className="row mb-3">
@@ -133,25 +134,27 @@ const ReporteProveedoresPDF = () => {
             <th>Nombre</th>
             <th>Teléfono</th>
             <th>Dirección</th>
+            <th>Email</th>
             <th>NIT</th>
             <th>Fecha de Creación</th>
           </tr>
         </thead>
         <tbody>
-          {proveedoresFiltrados.length > 0 ? (
-            proveedoresFiltrados.map((p) => (
-              <tr key={p.idprov}>
-                <td>{p.nombre || "-"}</td>
-                <td>{p.telefono || "-"}</td>
-                <td>{p.direccion || "-"}</td>
-                <td>{p.nit || "-"}</td>
-                <td>{formatearFecha(p.fechacreacion)}</td>
+          {clientesFiltrados.length > 0 ? (
+            clientesFiltrados.map((c) => (
+              <tr key={c.idcliente}>
+                <td>{c.nombre || "-"}</td>
+                <td>{c.telefono || "-"}</td>
+                <td>{c.direccion || "-"}</td>
+                <td>{c.email || "-"}</td>
+                <td>{c.nit || "-"}</td>
+                <td>{formatearFecha(c.fechacreacion)}</td>
               </tr>
             ))
           ) : (
             <tr>
-              <td colSpan="5" className="text-center">
-                No hay proveedores para mostrar
+              <td colSpan="6" className="text-center">
+                No hay clientes para mostrar
               </td>
             </tr>
           )}
@@ -161,4 +164,4 @@ const ReporteProveedoresPDF = () => {
   );
 };
 
-export default ReporteProveedoresPDF;
+export default ReporteClientesPDF;
