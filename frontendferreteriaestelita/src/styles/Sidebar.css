@@ -10,3 +10,21 @@
   background-color: #00bfff !important; /* Sidebar base celeste */
   color: black !important;
 }
+
+/* Asegura que la app siempre tenga altura completa */
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* Si tu layout principal es flex, asegura que se estire bien */
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content {
+  flex: 1; /* se expande para ocupar el espacio restante */
+  min-height: 100%;
+}
