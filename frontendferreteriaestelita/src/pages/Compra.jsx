@@ -312,7 +312,7 @@ const Compra = () => {
 
       Swal.fire({
         title: "Compra Exitosa",
-        text: "La compra se ha registrado correctamente ✅",
+        text: "La compra se ha registrado correctamente",
         icon: "success",
         confirmButtonText: "Aceptar",
         customClass: {

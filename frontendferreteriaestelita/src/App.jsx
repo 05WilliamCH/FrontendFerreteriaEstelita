@@ -17,6 +17,7 @@ import Devoluciones from "./pages/Devoluciones";
 import Compra from "./pages/Compra";
 
 import Productos from "./pages/Producto";
+import Inventario from "./pages/Inventario";
 
 
 import ReporteUsuarios from "./pages/Reportes/usuariosR";
@@ -126,6 +127,18 @@ function App() {
               element={
                 <DashboardLayout>
                   <Productos />
+                </DashboardLayout>
+              }
+            />
+          }
+        />
+        <Route
+          path="/inventario/precios"
+          element={
+            <PrivateRoute
+              element={
+                <DashboardLayout>
+                  <Inventario />
                 </DashboardLayout>
               }
             />

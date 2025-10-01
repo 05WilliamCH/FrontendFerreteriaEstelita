@@ -116,6 +116,11 @@ const Sidebar = () => {
                     Productos
                   </Link>
                 </li>
+                <li>
+                  <Link to="/inventario/precios" className="nav-link text-white ms-4">
+                    Agregar precios
+                  </Link>
+                </li>
               </ul>
             </div>
           </li>
