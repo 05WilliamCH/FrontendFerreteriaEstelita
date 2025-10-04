@@ -66,3 +66,9 @@ export const eliminarProducto = async (id) => {
     return null;
   }
 };
+
+// 🔥 Actualizar solo precio de venta
+export const actualizarPrecioVenta = async (id, data) => {
+  const res = await axios.put(`${API_URL}/producto/${id}/precio`, data);
+  return res.data;
+};
