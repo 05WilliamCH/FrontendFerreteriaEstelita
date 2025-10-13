@@ -254,7 +254,7 @@ const Sidebar = () => {
                   </Link>
                 </li>
                 <li>
-                  <Link to="/reportes/utilidades" className="nav-link text-white ms-4">
+                  <Link to="/reportes/rcompras" className="nav-link text-white ms-4">
                     Reporte de Productos
                   </Link>
                 </li>

@@ -29,6 +29,8 @@ import ReporteClientes from "./pages/Reportes/clienteR";
 
 import Reportes from "./pages/Reportes";
 
+import ReporteCompras from "./pages/RCompras";
+
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import "bootstrap-icons/font/bootstrap-icons.css";
@@ -249,6 +251,18 @@ function App() {
               element={
                 <DashboardLayout>
                   <ReporteClientes />
+                </DashboardLayout>
+              }
+            />
+          }
+        />
+           <Route
+          path="/reportes/rcompras"
+          element={
+            <PrivateRoute
+              element={
+                <DashboardLayout>
+                  <ReporteCompras />
                 </DashboardLayout>
               }
             />

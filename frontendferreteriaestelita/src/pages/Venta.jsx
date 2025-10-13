@@ -8,8 +8,7 @@ import { crearVenta } from "../services/ventaService";
 import Swal from "sweetalert2";
 import "@sweetalert2/theme-bootstrap-4/bootstrap-4.min.css";
 import { generarPDFVenta } from "../utils/pdfHelper";
-import logo from "../assets/ESTELITA.jpeg"; // tu logo en carpeta src/assets
-
+import logo from "../assets/ESTELITA.jpeg";
 
 const Venta = () => {
   const [cliente, setCliente] = useState("");
@@ -17,6 +16,9 @@ const Venta = () => {
   const [productos, setProductos] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [clientes, setClientes] = useState([]);
+  const [ventaActiva, setVentaActiva] = useState(null);
+  const [montoRecibido, setMontoRecibido] = useState("");
+  const [vuelto, setVuelto] = useState(0);
 
   // ----- MODALES -----
   const [showModalProducto, setShowModalProducto] = useState(false);
@@ -55,25 +57,10 @@ const Venta = () => {
   // ALERTAS AUTOMÁTICAS
   // =========================
   useEffect(() => {
-    if (alertProducto) {
-      const timer = setTimeout(() => setAlertProducto(""), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [alertProducto]);
-
-  useEffect(() => {
-    if (alertCliente) {
-      const timer = setTimeout(() => setAlertCliente(""), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [alertCliente]);
-
-  useEffect(() => {
-    if (alertVenta) {
-      const timer = setTimeout(() => setAlertVenta(""), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [alertVenta]);
+    if (alertProducto) setTimeout(() => setAlertProducto(""), 3000);
+    if (alertCliente) setTimeout(() => setAlertCliente(""), 3000);
+    if (alertVenta) setTimeout(() => setAlertVenta(""), 3000);
+  }, [alertProducto, alertCliente, alertVenta]);
 
   // =========================
   // Cargar Categorías y Clientes
@@ -83,7 +70,6 @@ const Venta = () => {
       try {
         const catData = await obtenerCategorias();
         setCategorias(catData);
-
         const cliData = await obtenerClientes();
         setClientes(cliData);
       } catch (error) {
@@ -110,6 +96,12 @@ const Venta = () => {
     0
   );
 
+  const calcularVuelto = (monto) => {
+    const montoNum = Number(monto) || 0;
+    const vueltoCalc = montoNum - totalGeneral;
+    setVuelto(vueltoCalc >= 0 ? vueltoCalc : 0);
+  };
+
   // =========================
   // Autocompletar producto
   // =========================
@@ -127,20 +119,6 @@ const Venta = () => {
           bulto: prod.bulto,
           detalle: prod.detalle,
           precio_venta: prod.precio_venta,
-          cantidad: prev.cantidad || "",
-          descuento: prev.descuento || 0,
-        }));
-      } else {
-        setProducto((prev) => ({
-          ...prev,
-          idproducto: null,
-          nombre: "",
-          idcategoria: "",
-          nombreCategoria: "",
-          bulto: "",
-          detalle: "",
-          precio_venta: 0,
-          cantidad: "",
         }));
       }
     } catch (error) {
@@ -185,12 +163,7 @@ const Venta = () => {
 
     if (editIndex !== null) {
       const nuevos = [...productos];
-      nuevos[editIndex] = {
-        ...nuevos[editIndex],
-        cantidad: producto.cantidad,
-        precio_venta: producto.precio_venta,
-        descuento: producto.descuento,
-      };
+      nuevos[editIndex] = producto;
       setProductos(nuevos);
     } else {
       if (productos.some((p) => p.codigo === producto.codigo)) {
@@ -199,7 +172,6 @@ const Venta = () => {
       }
       setProductos([...productos, producto]);
     }
-
     setShowModalProducto(false);
   };
 
@@ -236,7 +208,6 @@ const Venta = () => {
         direccion: "",
         email: "",
       });
-      setAlertCliente("");
     } catch (error) {
       setAlertCliente("No se pudo crear el cliente.");
     }
@@ -254,6 +225,10 @@ const Venta = () => {
       setAlertVenta("Seleccione fecha de venta.");
       return;
     }
+    if (Number(montoRecibido) < totalGeneral) {
+      setAlertVenta("El monto recibido es menor al total de la venta.");
+      return;
+    }
 
     Swal.fire({
       title: "¿Está seguro de guardar la venta?",
@@ -268,64 +243,72 @@ const Venta = () => {
       },
       buttonsStyling: false,
     }).then((result) => {
-      if (result.isConfirmed) {
-        handleGuardarVenta();
-      }
+      if (result.isConfirmed) handleGuardarVenta();
     });
   };
 
   const handleGuardarVenta = async () => {
     try {
-      await crearVenta({
+      const ventaCreada = await crearVenta({
         idcliente: cliente,
         fecha: fechaVenta,
-        total: totalGeneral,
         productos,
+        montorecibido: Number(montoRecibido),
+        vuelto: Number(vuelto),
       });
-      setProductos([]);
-      setFechaVenta("");
-      setCliente("");
-      setAlertVenta("");
+
+      setVentaActiva(ventaCreada.venta);
 
       Swal.fire({
         title: "Venta Exitosa",
         text: "La venta se ha registrado correctamente",
         icon: "success",
         confirmButtonText: "Aceptar",
-        customClass: {
-          confirmButton: "btn btn-success",
-        },
+        customClass: { confirmButton: "btn btn-success" },
         buttonsStyling: false,
       });
+
+      setProductos([]);
+      setCliente("");
+      setFechaVenta("");
+      setMontoRecibido("");
+      setVuelto(0);
     } catch (error) {
       setAlertVenta("No se pudo registrar la venta.");
+      console.error(error);
     }
   };
 
-  //-----SAT Y GENERAR RECIBO
-    const handleImprimir = () => {
+  // ----- PDF y SAT -----
+  const handleImprimir = () => {
+  if (!ventaActiva) return;
+
   const ventaPDF = {
-    numeroFactura: "001-0001", // o un número dinámico
-    cliente: clientes.find(c => c.idcliente === cliente)?.nombre || "Consumidor Final",
-    fecha: fechaVenta || new Date().toISOString().slice(0, 10),
-    productos: productos.map(p => ({
+    numeroFactura: ventaActiva.numeroFactura || ventaActiva.idventa.toString().padStart(6, "0"),
+    cliente: ventaActiva.cliente || { nombre: "Consumidor Final", nit: "CF", direccion: "Ciudad", telefono: "-" },
+    fecha: ventaActiva.fecha || new Date().toISOString().slice(0, 10),
+    productos: ventaActiva.productos.map((p) => ({
+      codigo: p.codigo || "-",
       nombre: p.nombre,
       cantidad: Number(p.cantidad),
-      precio: Number(p.precio_venta)
+      precio_venta: Number(p.precio_venta),
+      descuento: Number(p.descuento || 0),
+      subtotal: Number(p.cantidad) * Number(p.precio_venta) - Number(p.descuento || 0),
     })),
-    total: totalGeneral
+    total: Number(ventaActiva.total),
+    montoRecibido: Number(montoRecibido),
+    vuelto: Number(vuelto),
   };
 
   const img = new Image();
   img.src = logo;
-  img.onload = () => {
-    generarPDFVenta(ventaPDF, img.src);
-  };
+  img.onload = () => generarPDFVenta(ventaPDF, img.src);
 };
 
-const handleRedirigirSAT = () => {
-  window.open("https://portal.sat.gob.gt/", "_blank");
-};
+
+  const handleRedirigirSAT = () => {
+    window.open("https://portal.sat.gob.gt/", "_blank");
+  };
 
   // =========================
   // RENDER
@@ -335,11 +318,7 @@ const handleRedirigirSAT = () => {
       <h3>VENTA</h3>
 
       {alertVenta && (
-        <Alert
-          variant="warning"
-          onClose={() => setAlertVenta("")}
-          dismissible
-        >
+        <Alert variant="warning" onClose={() => setAlertVenta("")} dismissible>
           {alertVenta}
         </Alert>
       )}
@@ -357,18 +336,10 @@ const handleRedirigirSAT = () => {
             </option>
           ))}
         </Form.Select>
-        <Button
-          variant="primary"
-          className="me-2"
-          onClick={() => setShowModalCliente(true)}
-        >
+        <Button variant="primary" className="me-2" onClick={() => setShowModalCliente(true)}>
           + Nuevo Cliente
         </Button>
-        <Button
-          variant="success"
-          onClick={handleAgregarProducto}
-          className="me-2"
-        >
+        <Button variant="success" className="me-2" onClick={handleAgregarProducto}>
           + Añadir producto
         </Button>
         <Form.Control
@@ -386,8 +357,6 @@ const handleRedirigirSAT = () => {
             <th>CÓDIGO</th>
             <th>CATEGORÍA</th>
             <th>PRODUCTO</th>
-            <th>BULTO</th>
-            <th>DETALLE</th>
             <th>CANTIDAD</th>
             <th>PRECIO VENTA</th>
             <th>DESCUENTO</th>
@@ -398,36 +367,25 @@ const handleRedirigirSAT = () => {
         <tbody>
           {productos.length === 0 ? (
             <tr>
-              <td colSpan="10" className="text-center">
+              <td colSpan="8" className="text-center">
                 No hay productos agregados
               </td>
             </tr>
           ) : (
-            productos.map((p, index) => (
-              <tr key={index}>
+            productos.map((p, i) => (
+              <tr key={i}>
                 <td>{p.codigo}</td>
                 <td>{p.nombreCategoria}</td>
                 <td>{p.nombre}</td>
-                <td>{p.bulto}</td>
-                <td>{p.detalle}</td>
                 <td>{p.cantidad}</td>
-                <td>{p.precio_venta}</td>
-                <td>{p.descuento}</td>
-                <td>{calcularSubtotal(p).toFixed(2)}</td>
+                <td>Q{p.precio_venta}</td>
+                <td>Q{p.descuento}</td>
+                <td>Q{calcularSubtotal(p).toFixed(2)}</td>
                 <td>
-                  <Button
-                    variant="outline-primary"
-                    size="sm"
-                    className="me-2"
-                    onClick={() => handleEditarProducto(index)}
-                  >
+                  <Button variant="outline-primary" size="sm" onClick={() => handleEditarProducto(i)}>
                     ✏️
-                  </Button>
-                  <Button
-                    variant="outline-danger"
-                    size="sm"
-                    onClick={() => handleEliminarProducto(index)}
-                  >
+                  </Button>{" "}
+                  <Button variant="outline-danger" size="sm" onClick={() => handleEliminarProducto(i)}>
                     🗑️
                   </Button>
                 </td>
@@ -437,32 +395,44 @@ const handleRedirigirSAT = () => {
         </tbody>
       </Table>
 
-      <div className="d-flex justify-content-end align-items-center mb-3">
-        <strong className="me-2">Total:</strong>
-        <Form.Control
-          type="text"
-          value={totalGeneral.toFixed(2)}
-          readOnly
-          style={{ maxWidth: "150px" }}
-        />
+      {/* TOTAL Y VUELTO */}
+      <div className="d-flex flex-column align-items-end mb-3" style={{ maxWidth: "300px", marginLeft: "auto" }}>
+        <Form.Group className="d-flex align-items-center gap-2 mb-2 w-100">
+          <Form.Label className="m-0">Total:</Form.Label>
+          <Form.Control type="text" value={`Q${totalGeneral.toFixed(2)}`} readOnly />
+        </Form.Group>
+
+        <Form.Group className="d-flex align-items-center gap-2 mb-2 w-100">
+          <Form.Label className="m-0">Monto recibido:</Form.Label>
+          <Form.Control
+            type="number"
+            value={montoRecibido}
+            min="0"
+            onChange={(e) => {
+              setMontoRecibido(e.target.value);
+              calcularVuelto(e.target.value);
+            }}
+          />
+        </Form.Group>
+
+        <Form.Group className="d-flex align-items-center gap-2 w-100">
+          <Form.Label className="m-0">Vuelto:</Form.Label>
+          <Form.Control type="text" value={`Q${vuelto.toFixed(2)}`} readOnly />
+        </Form.Group>
       </div>
 
-      <Button
-        variant="success"
-        className="mb-4"
-        onClick={handleConfirmarVenta}
-      >
+      <Button variant="success" className="mb-3" onClick={handleConfirmarVenta}>
         Guardar Venta
       </Button>
-           
-       <div className="d-flex gap-2 mb-4">
-  <Button variant="danger" onClick={handleImprimir}>
-    🖨️ Imprimir PDF
-  </Button>
-  <Button variant="primary" onClick={handleRedirigirSAT}>
-    🌐 Ir a SAT
-  </Button>
-</div>
+
+      <div className="d-flex gap-2 mb-4">
+        <Button variant="danger" onClick={handleImprimir}>
+          🖨️ Imprimir PDF
+        </Button>
+        <Button variant="primary" onClick={handleRedirigirSAT}>
+          🌐 Ir a SAT
+        </Button>
+      </div>
 
       {/* MODAL PRODUCTO */}
       <Modal
@@ -476,11 +446,7 @@ const handleRedirigirSAT = () => {
         </Modal.Header>
         <Modal.Body>
           {alertProducto && (
-            <Alert
-              variant="warning"
-              onClose={() => setAlertProducto("")}
-              dismissible
-            >
+            <Alert variant="warning" onClose={() => setAlertProducto("")} dismissible>
               {alertProducto}
             </Alert>
           )}
@@ -519,10 +485,7 @@ const handleRedirigirSAT = () => {
                 min="0"
                 value={producto.cantidad}
                 onChange={(e) =>
-                  setProducto({
-                    ...producto,
-                    cantidad: e.target.value.replace("-", ""),
-                  })
+                  setProducto({ ...producto, cantidad: e.target.value.replace("-", "") })
                 }
               />
             </Form.Group>
@@ -533,10 +496,7 @@ const handleRedirigirSAT = () => {
                 min="0"
                 value={producto.precio_venta}
                 onChange={(e) =>
-                  setProducto({
-                    ...producto,
-                    precio_venta: e.target.value.replace("-", ""),
-                  })
+                  setProducto({ ...producto, precio_venta: e.target.value.replace("-", "") })
                 }
               />
             </Form.Group>
@@ -547,10 +507,7 @@ const handleRedirigirSAT = () => {
                 min="0"
                 value={producto.descuento}
                 onChange={(e) =>
-                  setProducto({
-                    ...producto,
-                    descuento: e.target.value.replace("-", ""),
-                  })
+                  setProducto({ ...producto, descuento: e.target.value.replace("-", "") })
                 }
               />
             </Form.Group>
@@ -560,15 +517,8 @@ const handleRedirigirSAT = () => {
           </Form>
         </Modal.Body>
         <Modal.Footer>
-          <Button
-            variant="secondary"
-            onClick={() => setShowModalProducto(false)}
-          >
-            Cancelar
-          </Button>
-          <Button variant="success" onClick={handleGuardarProducto}>
-            Guardar
-          </Button>
+          <Button variant="secondary" onClick={() => setShowModalProducto(false)}>Cancelar</Button>
+          <Button variant="success" onClick={handleGuardarProducto}>Guardar</Button>
         </Modal.Footer>
       </Modal>
 
@@ -582,11 +532,7 @@ const handleRedirigirSAT = () => {
         </Modal.Header>
         <Modal.Body>
           {alertCliente && (
-            <Alert
-              variant="warning"
-              onClose={() => setAlertCliente("")}
-              dismissible
-            >
+            <Alert variant="warning" onClose={() => setAlertCliente("")} dismissible>
               {alertCliente}
             </Alert>
           )}
@@ -595,65 +541,42 @@ const handleRedirigirSAT = () => {
               <Form.Label>Nombre</Form.Label>
               <Form.Control
                 value={nuevoCliente.nombre}
-                onChange={(e) =>
-                  setNuevoCliente({ ...nuevoCliente, nombre: e.target.value })
-                }
+                onChange={(e) => setNuevoCliente({ ...nuevoCliente, nombre: e.target.value })}
               />
             </Form.Group>
             <Form.Group className="mb-2">
               <Form.Label>Teléfono</Form.Label>
               <Form.Control
                 value={nuevoCliente.telefono}
-                onChange={(e) =>
-                  setNuevoCliente({
-                    ...nuevoCliente,
-                    telefono: e.target.value,
-                  })
-                }
+                onChange={(e) => setNuevoCliente({ ...nuevoCliente, telefono: e.target.value })}
               />
             </Form.Group>
             <Form.Group className="mb-2">
               <Form.Label>NIT</Form.Label>
               <Form.Control
                 value={nuevoCliente.nit}
-                onChange={(e) =>
-                  setNuevoCliente({ ...nuevoCliente, nit: e.target.value })
-                }
+                onChange={(e) => setNuevoCliente({ ...nuevoCliente, nit: e.target.value })}
               />
             </Form.Group>
             <Form.Group className="mb-2">
               <Form.Label>Dirección</Form.Label>
               <Form.Control
                 value={nuevoCliente.direccion}
-                onChange={(e) =>
-                  setNuevoCliente({
-                    ...nuevoCliente,
-                    direccion: e.target.value,
-                  })
-                }
+                onChange={(e) => setNuevoCliente({ ...nuevoCliente, direccion: e.target.value })}
               />
             </Form.Group>
             <Form.Group className="mb-2">
               <Form.Label>Email</Form.Label>
               <Form.Control
                 value={nuevoCliente.email}
-                onChange={(e) =>
-                  setNuevoCliente({ ...nuevoCliente, email: e.target.value })
-                }
+                onChange={(e) => setNuevoCliente({ ...nuevoCliente, email: e.target.value })}
               />
             </Form.Group>
           </Form>
         </Modal.Body>
         <Modal.Footer>
-          <Button
-            variant="secondary"
-            onClick={() => setShowModalCliente(false)}
-          >
-            Cancelar
-          </Button>
-          <Button variant="success" onClick={handleGuardarCliente}>
-            Guardar
-          </Button>
+          <Button variant="secondary" onClick={() => setShowModalCliente(false)}>Cancelar</Button>
+          <Button variant="success" onClick={handleGuardarCliente}>Guardar</Button>
         </Modal.Footer>
       </Modal>
     </div>
