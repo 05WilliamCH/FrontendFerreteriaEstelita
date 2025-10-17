@@ -1,7 +1,7 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 
-export const exportarPDFCompras = (reporte, logoBase64, fechaInicio, fechaFin) => {
+export const exportarPDFVentas = (reporte, logoBase64, fechaInicio, fechaFin) => {
   if (!reporte || reporte.length === 0) return;
 
   const doc = new jsPDF();
@@ -30,7 +30,7 @@ export const exportarPDFCompras = (reporte, logoBase64, fechaInicio, fechaFin) =
   // ========================
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-  doc.text("REPORTE DE COMPRAS", pageWidth / 2, 48, { align: "center" });
+  doc.text("REPORTE DE VENTAS", pageWidth / 2, 48, { align: "center" });
 
   // ========================
   // RANGO DE FECHAS
@@ -41,26 +41,26 @@ export const exportarPDFCompras = (reporte, logoBase64, fechaInicio, fechaFin) =
   doc.text(rangoTexto, pageWidth / 2, 56, { align: "center" });
 
   // ========================
-  // TABLA DE COMPRAS
+  // TABLA DE VENTAS
   // ========================
   const tableColumn = [
     "#",
     "Fecha",
-    "Usuario",
-    "Proveedor",
-    "Cantidad Productos",
-    "Unidades Compradas",
+    "Cliente",
+    "Usuario (Vendedor)",
+    "Cant. Productos",
+    "Unidades Vendidas",
     "Total Q.",
   ];
 
-  const tableRows = reporte.map((compra, index) => [
+  const tableRows = reporte.map((venta, index) => [
     index + 1,
-    compra.fecha_compra,
-    compra.usuario,
-    compra.proveedor || "",
-    compra.cantidad_productos,
-    compra.unidades_compradas,
-    Number(compra.total_compra).toFixed(2),
+    venta.fecha_venta,
+    venta.cliente || "",
+    venta.usuario || "",
+    venta.cantidad_productos,
+    venta.unidades_vendidas,
+    Number(venta.total_venta).toFixed(2),
   ]);
 
   autoTable(doc, {
@@ -68,7 +68,7 @@ export const exportarPDFCompras = (reporte, logoBase64, fechaInicio, fechaFin) =
     head: [tableColumn],
     body: tableRows,
     theme: "grid",
-    headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: "bold" },
+    headStyles: { fillColor: [39, 174, 96], textColor: 255, fontStyle: "bold" },
     styles: { fontSize: 10 },
     margin: { left: 10, right: 10 },
     columnStyles: {
@@ -83,7 +83,7 @@ export const exportarPDFCompras = (reporte, logoBase64, fechaInicio, fechaFin) =
   // ========================
   const finalY = doc.lastAutoTable.finalY || 80;
   const totalGeneral = reporte
-    .reduce((sum, compra) => sum + parseFloat(compra.total_compra || 0), 0)
+    .reduce((sum, venta) => sum + parseFloat(venta.total_venta || 0), 0)
     .toFixed(2);
 
   doc.setFontSize(12);
@@ -102,5 +102,5 @@ export const exportarPDFCompras = (reporte, logoBase64, fechaInicio, fechaFin) =
   // ========================
   // GUARDAR PDF
   // ========================
-  doc.save(`Reporte_Compras_${new Date().toLocaleDateString().replace(/\//g, "-")}.pdf`);
+  doc.save(`Reporte_Ventas_${new Date().toLocaleDateString().replace(/\//g, "-")}.pdf`);
 };

@@ -21,6 +21,8 @@ import Inventario from "./pages/Inventario";
 
 import Venta from "./pages/Venta";
 
+import Caja from "./pages/Caja";
+
 
 import ReporteUsuarios from "./pages/Reportes/usuariosR";
 import ReporteCategorias from "./pages/Reportes/categoriaR";
@@ -30,6 +32,7 @@ import ReporteClientes from "./pages/Reportes/clienteR";
 import Reportes from "./pages/Reportes";
 
 import ReporteCompras from "./pages/RCompras";
+import ReporteVentas from "./pages/RVentas";
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
@@ -263,6 +266,31 @@ function App() {
               element={
                 <DashboardLayout>
                   <ReporteCompras />
+                </DashboardLayout>
+              }
+            />
+          }
+        />
+          <Route
+          path="/reportes/rventas"
+          element={
+            <PrivateRoute
+              element={
+                <DashboardLayout>
+                  <ReporteVentas />
+                </DashboardLayout>
+              }
+            />
+          }
+        />
+
+         <Route
+          path="/caja"
+          element={
+            <PrivateRoute
+              element={
+                <DashboardLayout>
+                  <Caja />
                 </DashboardLayout>
               }
             />
