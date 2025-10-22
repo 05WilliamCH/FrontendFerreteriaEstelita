@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Card, Row, Col, Container } from "react-bootstrap";
 import { Bar, Pie } from "react-chartjs-2";
 import {
@@ -12,29 +12,56 @@ import {
   Legend,
 } from "chart.js";
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend
-);
+ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend);
 
 const ModernDashboard = () => {
-  // Datos de los cards
-  const totalVentas = 0;
-  const totalProductos = 15;
-  const totalCategorias = 15;
+  const [totales, setTotales] = useState({
+    total_productos: 0,
+    total_categorias: 0,
+    productosPorCategoria: [],
+  });
+  const [ventasSemana, setVentasSemana] = useState([]);
+  const [ventasHoy, setVentasHoy] = useState(0);
 
-  // Datos de la gráfica de barras
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch("http://localhost:3000/api/dashboard/datos");
+        const data = await res.json();
+
+        setTotales({
+          ...data.totales,
+          productosPorCategoria: data.productosPorCategoria,
+        });
+        setVentasSemana(data.ventasSemana);
+        setVentasHoy(data.ventasHoy);
+      } catch (error) {
+        console.error("Error al obtener datos del dashboard:", error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // Genera colores dinámicos para el gráfico circular
+  const generarColores = (cantidad) => {
+    const colores = [];
+    for (let i = 0; i < cantidad; i++) {
+      const r = Math.floor(Math.random() * 255);
+      const g = Math.floor(Math.random() * 255);
+      const b = Math.floor(Math.random() * 255);
+      colores.push(`rgba(${r}, ${g}, ${b}, 0.7)`);
+    }
+    return colores;
+  };
+
+  // Gráfico de barras (ventas últimos 7 días)
   const barData = {
-    labels: ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"],
+    labels: ventasSemana.map((v) => v.dia),
     datasets: [
       {
-        label: "Ventas",
-        data: [24, 11, 29, 6, 24, 15, 20],
+        label: "Ventas (Q)",
+        data: ventasSemana.map((v) => parseFloat(v.total_ventas)),
         backgroundColor: "rgba(54, 162, 235, 0.7)",
       },
     ],
@@ -48,18 +75,14 @@ const ModernDashboard = () => {
     },
   };
 
-  // Datos de la gráfica circular
+  // Gráfico circular (productos por categoría)
   const pieData = {
-    labels: ["Categoría A", "Categoría B", "Categoría C"],
+    labels: totales.productosPorCategoria?.map((p) => p.nombre_categoria) || [],
     datasets: [
       {
         label: "Productos por categoría",
-        data: [10, 25, 15],
-        backgroundColor: [
-          "rgba(255, 99, 132, 0.7)",
-          "rgba(54, 162, 235, 0.7)",
-          "rgba(255, 206, 86, 0.7)",
-        ],
+        data: totales.productosPorCategoria?.map((p) => p.cantidad) || [],
+        backgroundColor: generarColores(totales.productosPorCategoria?.length || 0),
       },
     ],
   };
@@ -86,20 +109,20 @@ const ModernDashboard = () => {
       <Row className="mb-4">
         <Col md={4}>
           <Card className="text-center shadow-sm p-3 mb-3">
-            <h6>Total de Ventas</h6>
-            <h3>{totalVentas}</h3>
+            <h6>Total de Ventas Hoy</h6>
+            <h3>Q {ventasHoy}</h3>
           </Card>
         </Col>
         <Col md={4}>
           <Card className="text-center shadow-sm p-3 mb-3 bg-success text-white">
             <h6>Total de Productos</h6>
-            <h3>{totalProductos}</h3>
+            <h3>{totales.total_productos}</h3>
           </Card>
         </Col>
         <Col md={4}>
           <Card className="text-center shadow-sm p-3 mb-3 bg-warning text-dark">
             <h6>Total de Categorías</h6>
-            <h3>{totalCategorias}</h3>
+            <h3>{totales.total_categorias}</h3>
           </Card>
         </Col>
       </Row>

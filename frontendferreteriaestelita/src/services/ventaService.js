@@ -6,6 +6,8 @@ const API_URL = "http://localhost:3000/api/ventas";
 // CREAR NUEVA VENTA
 // ========================
 export const crearVenta = async (ventaData) => {
+  // ventaData debe incluir:
+  // idcliente, idusuario, fecha, productos (array), montorecibido, vuelto
   const res = await axios.post(API_URL, ventaData);
   return res.data;
 };

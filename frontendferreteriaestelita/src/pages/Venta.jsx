@@ -5,6 +5,7 @@ import { obtenerCategorias } from "../services/categoriaService";
 import { obtenerClientes, crearCliente } from "../services/clienteService";
 import { obtenerProductoPorCodigo } from "../services/productoService";
 import { crearVenta } from "../services/ventaService";
+import { obtenerEstadoCaja } from "../services/cajaService";
 import Swal from "sweetalert2";
 import "@sweetalert2/theme-bootstrap-4/bootstrap-4.min.css";
 import { generarPDFVenta } from "../utils/pdfHelper";
@@ -19,6 +20,8 @@ const Venta = () => {
   const [ventaActiva, setVentaActiva] = useState(null);
   const [montoRecibido, setMontoRecibido] = useState("");
   const [vuelto, setVuelto] = useState(0);
+
+  const [cajaAbierta, setCajaAbierta] = useState(false); // 🔹 Estado de la caja
 
   // ----- MODALES -----
   const [showModalProducto, setShowModalProducto] = useState(false);
@@ -63,15 +66,19 @@ const Venta = () => {
   }, [alertProducto, alertCliente, alertVenta]);
 
   // =========================
-  // Cargar Categorías y Clientes
+  // Cargar Categorías, Clientes y Caja
   // =========================
   useEffect(() => {
     const fetchData = async () => {
       try {
         const catData = await obtenerCategorias();
         setCategorias(catData);
+
         const cliData = await obtenerClientes();
         setClientes(cliData);
+
+        const estadoCaja = await obtenerEstadoCaja();
+        setCajaAbierta(estadoCaja.abierta);
       } catch (error) {
         console.error("Error cargando datos:", error);
       }
@@ -130,6 +137,7 @@ const Venta = () => {
   // PRODUCTOS
   // =========================
   const handleAgregarProducto = () => {
+    if (!cajaAbierta) return;
     if (!cliente) {
       setAlertVenta("Seleccione un cliente antes de agregar productos.");
       return;
@@ -176,6 +184,7 @@ const Venta = () => {
   };
 
   const handleEditarProducto = (index) => {
+    if (!cajaAbierta) return;
     setEditIndex(index);
     setProducto(productos[index]);
     setAlertProducto("");
@@ -183,6 +192,7 @@ const Venta = () => {
   };
 
   const handleEliminarProducto = (index) => {
+    if (!cajaAbierta) return;
     if (window.confirm("¿Desea eliminar este producto?")) {
       setProductos(productos.filter((_, i) => i !== index));
     }
@@ -192,6 +202,7 @@ const Venta = () => {
   // CLIENTE
   // =========================
   const handleGuardarCliente = async () => {
+    if (!cajaAbierta) return;
     if (!nuevoCliente.nombre) {
       setAlertCliente("Ingrese el nombre del cliente.");
       return;
@@ -214,9 +225,13 @@ const Venta = () => {
   };
 
   // =========================
-  // VENTA con SweetAlert2
+  // VENTA
   // =========================
   const handleConfirmarVenta = () => {
+    if (!cajaAbierta) {
+      setAlertVenta("La caja está cerrada. No se pueden realizar ventas.");
+      return;
+    }
     if (!cliente || productos.length === 0) {
       setAlertVenta("Seleccione cliente y agregue productos.");
       return;
@@ -281,32 +296,32 @@ const Venta = () => {
 
   // ----- PDF y SAT -----
   const handleImprimir = () => {
-  if (!ventaActiva) return;
+    if (!cajaAbierta || !ventaActiva) return;
 
-  const ventaPDF = {
-    numeroFactura: ventaActiva.numeroFactura || ventaActiva.idventa.toString().padStart(6, "0"),
-    cliente: ventaActiva.cliente || { nombre: "Consumidor Final", nit: "CF", direccion: "Ciudad", telefono: "-" },
-    fecha: ventaActiva.fecha || new Date().toISOString().slice(0, 10),
-    productos: ventaActiva.productos.map((p) => ({
-      codigo: p.codigo || "-",
-      nombre: p.nombre,
-      cantidad: Number(p.cantidad),
-      precio_venta: Number(p.precio_venta),
-      descuento: Number(p.descuento || 0),
-      subtotal: Number(p.cantidad) * Number(p.precio_venta) - Number(p.descuento || 0),
-    })),
-    total: Number(ventaActiva.total),
-    montoRecibido: Number(montoRecibido),
-    vuelto: Number(vuelto),
+    const ventaPDF = {
+      numeroFactura: ventaActiva.numeroFactura || ventaActiva.idventa.toString().padStart(6, "0"),
+      cliente: ventaActiva.cliente || { nombre: "Consumidor Final", nit: "CF", direccion: "Ciudad", telefono: "-" },
+      fecha: ventaActiva.fecha || new Date().toISOString().slice(0, 10),
+      productos: ventaActiva.productos.map((p) => ({
+        codigo: p.codigo || "-",
+        nombre: p.nombre,
+        cantidad: Number(p.cantidad),
+        precio_venta: Number(p.precio_venta),
+        descuento: Number(p.descuento || 0),
+        subtotal: Number(p.cantidad) * Number(p.precio_venta) - Number(p.descuento || 0),
+      })),
+      total: Number(ventaActiva.total),
+      montoRecibido: Number(montoRecibido),
+      vuelto: Number(vuelto),
+    };
+
+    const img = new Image();
+    img.src = logo;
+    img.onload = () => generarPDFVenta(ventaPDF, img.src);
   };
 
-  const img = new Image();
-  img.src = logo;
-  img.onload = () => generarPDFVenta(ventaPDF, img.src);
-};
-
-
   const handleRedirigirSAT = () => {
+    if (!cajaAbierta) return;
     window.open("https://portal.sat.gob.gt/", "_blank");
   };
 
@@ -316,6 +331,12 @@ const Venta = () => {
   return (
     <div className="container mt-4">
       <h3>VENTA</h3>
+
+      {!cajaAbierta && (
+        <Alert variant="warning">
+          La caja está cerrada. Abra la caja para poder realizar ventas.
+        </Alert>
+      )}
 
       {alertVenta && (
         <Alert variant="warning" onClose={() => setAlertVenta("")} dismissible>
@@ -328,6 +349,7 @@ const Venta = () => {
           value={cliente}
           onChange={(e) => setCliente(e.target.value)}
           className="me-2"
+          disabled={!cajaAbierta}
         >
           <option value="">Seleccione cliente</option>
           {clientes.map((c) => (
@@ -336,10 +358,20 @@ const Venta = () => {
             </option>
           ))}
         </Form.Select>
-        <Button variant="primary" className="me-2" onClick={() => setShowModalCliente(true)}>
+        <Button 
+          variant="primary" 
+          className="me-2" 
+          onClick={() => setShowModalCliente(true)}
+          disabled={!cajaAbierta}
+        >
           + Nuevo Cliente
         </Button>
-        <Button variant="success" className="me-2" onClick={handleAgregarProducto}>
+        <Button 
+          variant="success" 
+          className="me-2" 
+          onClick={handleAgregarProducto}
+          disabled={!cajaAbierta}
+        >
           + Añadir producto
         </Button>
         <Form.Control
@@ -347,6 +379,7 @@ const Venta = () => {
           value={fechaVenta}
           onChange={(e) => setFechaVenta(e.target.value)}
           style={{ maxWidth: "200px" }}
+          disabled={!cajaAbierta}
         />
       </div>
 
@@ -382,10 +415,10 @@ const Venta = () => {
                 <td>Q{p.descuento}</td>
                 <td>Q{calcularSubtotal(p).toFixed(2)}</td>
                 <td>
-                  <Button variant="outline-primary" size="sm" onClick={() => handleEditarProducto(i)}>
+                  <Button variant="outline-primary" size="sm" onClick={() => handleEditarProducto(i)} disabled={!cajaAbierta}>
                     ✏️
                   </Button>{" "}
-                  <Button variant="outline-danger" size="sm" onClick={() => handleEliminarProducto(i)}>
+                  <Button variant="outline-danger" size="sm" onClick={() => handleEliminarProducto(i)} disabled={!cajaAbierta}>
                     🗑️
                   </Button>
                 </td>
@@ -412,6 +445,7 @@ const Venta = () => {
               setMontoRecibido(e.target.value);
               calcularVuelto(e.target.value);
             }}
+            disabled={!cajaAbierta}
           />
         </Form.Group>
 
@@ -421,28 +455,27 @@ const Venta = () => {
         </Form.Group>
       </div>
 
-      <Button variant="success" className="mb-3" onClick={handleConfirmarVenta}>
+      <Button variant="success" className="mb-3" onClick={handleConfirmarVenta} disabled={!cajaAbierta}>
         Guardar Venta
       </Button>
 
       <div className="d-flex gap-2 mb-4">
-        <Button variant="danger" onClick={handleImprimir}>
+        <Button variant="danger" onClick={handleImprimir} disabled={!cajaAbierta || !ventaActiva}>
           🖨️ Imprimir PDF
         </Button>
-        <Button variant="primary" onClick={handleRedirigirSAT}>
+        <Button variant="primary" onClick={handleRedirigirSAT} disabled={!cajaAbierta}>
           🌐 Ir a SAT
         </Button>
       </div>
 
+      {/* MODALES */}
       {/* MODAL PRODUCTO */}
       <Modal
         show={showModalProducto}
         onHide={() => setShowModalProducto(false)}
       >
         <Modal.Header closeButton>
-          <Modal.Title>
-            {editIndex !== null ? "Editar producto" : "Agregar producto"}
-          </Modal.Title>
+          <Modal.Title>{editIndex !== null ? "Editar producto" : "Agregar producto"}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {alertProducto && (
@@ -459,7 +492,7 @@ const Venta = () => {
                   setProducto({ ...producto, codigo: e.target.value });
                   if (!editIndex) autocompletarProductoDebounce(e.target.value);
                 }}
-                readOnly={editIndex !== null}
+                readOnly={editIndex !== null || !cajaAbierta}
               />
             </Form.Group>
             <Form.Group className="mb-2">
@@ -487,6 +520,7 @@ const Venta = () => {
                 onChange={(e) =>
                   setProducto({ ...producto, cantidad: e.target.value.replace("-", "") })
                 }
+                disabled={!cajaAbierta}
               />
             </Form.Group>
             <Form.Group className="mb-2">
@@ -498,6 +532,7 @@ const Venta = () => {
                 onChange={(e) =>
                   setProducto({ ...producto, precio_venta: e.target.value.replace("-", "") })
                 }
+                disabled={!cajaAbierta}
               />
             </Form.Group>
             <Form.Group className="mb-2">
@@ -509,6 +544,7 @@ const Venta = () => {
                 onChange={(e) =>
                   setProducto({ ...producto, descuento: e.target.value.replace("-", "") })
                 }
+                disabled={!cajaAbierta}
               />
             </Form.Group>
             <div className="text-end mt-2">
@@ -517,8 +553,8 @@ const Venta = () => {
           </Form>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowModalProducto(false)}>Cancelar</Button>
-          <Button variant="success" onClick={handleGuardarProducto}>Guardar</Button>
+          <Button variant="secondary" onClick={() => setShowModalProducto(false)} disabled={!cajaAbierta}>Cancelar</Button>
+          <Button variant="success" onClick={handleGuardarProducto} disabled={!cajaAbierta}>Guardar</Button>
         </Modal.Footer>
       </Modal>
 
@@ -542,6 +578,7 @@ const Venta = () => {
               <Form.Control
                 value={nuevoCliente.nombre}
                 onChange={(e) => setNuevoCliente({ ...nuevoCliente, nombre: e.target.value })}
+                disabled={!cajaAbierta}
               />
             </Form.Group>
             <Form.Group className="mb-2">
@@ -549,6 +586,7 @@ const Venta = () => {
               <Form.Control
                 value={nuevoCliente.telefono}
                 onChange={(e) => setNuevoCliente({ ...nuevoCliente, telefono: e.target.value })}
+                disabled={!cajaAbierta}
               />
             </Form.Group>
             <Form.Group className="mb-2">
@@ -556,6 +594,7 @@ const Venta = () => {
               <Form.Control
                 value={nuevoCliente.nit}
                 onChange={(e) => setNuevoCliente({ ...nuevoCliente, nit: e.target.value })}
+                disabled={!cajaAbierta}
               />
             </Form.Group>
             <Form.Group className="mb-2">
@@ -563,6 +602,7 @@ const Venta = () => {
               <Form.Control
                 value={nuevoCliente.direccion}
                 onChange={(e) => setNuevoCliente({ ...nuevoCliente, direccion: e.target.value })}
+                disabled={!cajaAbierta}
               />
             </Form.Group>
             <Form.Group className="mb-2">
@@ -570,13 +610,14 @@ const Venta = () => {
               <Form.Control
                 value={nuevoCliente.email}
                 onChange={(e) => setNuevoCliente({ ...nuevoCliente, email: e.target.value })}
+                disabled={!cajaAbierta}
               />
             </Form.Group>
           </Form>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowModalCliente(false)}>Cancelar</Button>
-          <Button variant="success" onClick={handleGuardarCliente}>Guardar</Button>
+          <Button variant="secondary" onClick={() => setShowModalCliente(false)} disabled={!cajaAbierta}>Cancelar</Button>
+          <Button variant="success" onClick={handleGuardarCliente} disabled={!cajaAbierta}>Guardar</Button>
         </Modal.Footer>
       </Modal>
     </div>

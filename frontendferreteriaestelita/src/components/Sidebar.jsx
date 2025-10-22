@@ -263,6 +263,11 @@ const Sidebar = () => {
                     Reporte de Ventas
                   </Link>
                 </li>
+                <li>
+                  <Link to="/reportes/caja" className="nav-link text-white ms-4">
+                    Reporte de Caja
+                  </Link>
+                </li>
               </ul>
             </div>
           </li>

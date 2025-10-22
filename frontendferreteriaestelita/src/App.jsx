@@ -22,6 +22,7 @@ import Inventario from "./pages/Inventario";
 import Venta from "./pages/Venta";
 
 import Caja from "./pages/Caja";
+import RCaja from "./pages/RCaja";
 
 
 import ReporteUsuarios from "./pages/Reportes/usuariosR";
@@ -291,6 +292,19 @@ function App() {
               element={
                 <DashboardLayout>
                   <Caja />
+                </DashboardLayout>
+              }
+            />
+          }
+        />
+
+        <Route
+          path="/reportes/caja"
+          element={
+            <PrivateRoute
+              element={
+                <DashboardLayout>
+                  <RCaja />
                 </DashboardLayout>
               }
             />

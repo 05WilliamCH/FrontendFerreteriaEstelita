@@ -25,3 +25,22 @@ export const sumarVentaCaja = async (monto) => {
   const res = await axios.post(`${API_URL}/sumarVenta`, { monto });
   return res.data;
 };
+
+
+// ========================
+// REPORTE / HISTORIAL DE TODAS LAS CAJAS
+// ========================
+export const obtenerReporteCajas = async () => {
+  const res = await axios.get(`${API_URL}/reporte`);
+  return res.data;
+};
+
+// ========================
+// REPORTE DE CAJAS POR RANGO DE FECHAS
+// ========================
+export const obtenerReporteCajasPorFechas = async (fechaInicio, fechaFin) => {
+  const res = await axios.get(`${API_URL}/reporte/fechas`, {
+    params: { fechaInicio, fechaFin },
+  });
+  return res.data;
+};
