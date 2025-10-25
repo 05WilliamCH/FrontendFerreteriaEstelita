@@ -13,14 +13,21 @@ const Perfil = () => {
     password: "", // solo si desea cambiarla
   });
 
-  // Simulamos usuario logueado
-  const idUsuarioLogueado = 1; // ⚠️ aquí deberías tomarlo del JWT o localStorage
+  // // Simulamos usuario logueado
+  // const idUsuarioLogueado = 1; // ⚠️ aquí deberías tomarlo del JWT o localStorage
+
+   // ✅ Obtener el ID real del usuario logueado desde localStorage
+  const idUsuarioLogueado = localStorage.getItem("idusuario");
 
   useEffect(() => {
     const cargarPerfil = async () => {
       try {
         const data = await obtenerUsuarios();
-        const u = data.find((user) => user.idusuario === idUsuarioLogueado);
+        const u = data.find((user) => user.idusuario === Number(idUsuarioLogueado));
+        if (!u) {
+          console.warn("No se encontró el usuario logueado");
+          return;
+        }
         setUsuario(u);
         setForm({
           nombre: u.nombre,
@@ -34,8 +41,12 @@ const Perfil = () => {
         console.error("Error cargando perfil", error);
       }
     };
+    if (idUsuarioLogueado) {
     cargarPerfil();
-  }, []);
+    } else {
+      console.warn("No hay idusuario en localStorage");
+    } 
+  }, [idUsuarioLogueado]);
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });

@@ -22,6 +22,7 @@ const ModernDashboard = () => {
   });
   const [ventasSemana, setVentasSemana] = useState([]);
   const [ventasHoy, setVentasHoy] = useState(0);
+  const [cantidadVentasHoy, setCantidadVentasHoy] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -35,6 +36,7 @@ const ModernDashboard = () => {
         });
         setVentasSemana(data.ventasSemana);
         setVentasHoy(data.ventasHoy);
+        setCantidadVentasHoy(data.cantidadVentasHoy);
       } catch (error) {
         console.error("Error al obtener datos del dashboard:", error);
       }
@@ -107,19 +109,25 @@ const ModernDashboard = () => {
 
       {/* Cards de totales */}
       <Row className="mb-4">
-        <Col md={4}>
+        <Col md={3}>
           <Card className="text-center shadow-sm p-3 mb-3">
             <h6>Total de Ventas Hoy</h6>
             <h3>Q {ventasHoy}</h3>
           </Card>
         </Col>
-        <Col md={4}>
+        <Col md={3}>
+          <Card className="text-center shadow-sm p-3 mb-3 bg-info text-white">
+            <h6>Cantidad de Ventas Hoy</h6>
+            <h3>{cantidadVentasHoy}</h3>
+          </Card>
+        </Col>
+        <Col md={3}>
           <Card className="text-center shadow-sm p-3 mb-3 bg-success text-white">
             <h6>Total de Productos</h6>
             <h3>{totales.total_productos}</h3>
           </Card>
         </Col>
-        <Col md={4}>
+        <Col md={3}>
           <Card className="text-center shadow-sm p-3 mb-3 bg-warning text-dark">
             <h6>Total de Categorías</h6>
             <h3>{totales.total_categorias}</h3>

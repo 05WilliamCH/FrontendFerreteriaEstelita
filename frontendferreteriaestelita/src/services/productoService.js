@@ -72,3 +72,9 @@ export const actualizarPrecioVenta = async (id, data) => {
   const res = await axios.put(`${API_URL}/producto/${id}/precio`, data);
   return res.data;
 };
+
+// 🔥 Buscar productos por nombre (autocompletado)
+export const buscarProductoPorNombre = async (nombre) => {
+  const res = await axios.get(`${API_URL}/buscar`, { params: { nombre } });
+  return res.data;
+};

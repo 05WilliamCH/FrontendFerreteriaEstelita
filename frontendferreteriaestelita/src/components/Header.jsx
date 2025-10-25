@@ -3,35 +3,26 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 import useAuth from "../hooks/useAuth";
 
 const Header = () => {
-  const { logout, token } = useAuth();
+  const { logout } = useAuth();
   const [nombreUsuario, setNombreUsuario] = useState("Usuario");
   const [rolUsuario, setRolUsuario] = useState("");
 
   useEffect(() => {
-    if (token) {
-      const decoded = decodeToken(token);
+    const nombre = localStorage.getItem("nombre");
+    const rol = localStorage.getItem("rol");
 
-      if (decoded) {
-        setNombreUsuario(decoded.nombre || "Usuario");
-        setRolUsuario(decoded.rol || ""); // 👈 Aquí tomamos el rol
-      }
+    if (nombre) setNombreUsuario(nombre);
+    if (rol) {
+      if (rol === "1" || rol === 1) setRolUsuario("Administrador");
+      else if (rol === "2" || rol === 2) setRolUsuario("Contador");
+      else setRolUsuario("Empleado");
     }
-  }, [token]);
-
-  const decodeToken = (token) => {
-    try {
-      const payload = token.split(".")[1];
-      const decoded = JSON.parse(atob(payload));
-      return decoded;
-    } catch (err) {
-      console.error("Error al decodificar token:", err);
-      return null;
-    }
-  };
+  }, []);
 
   return (
     <nav className="navbar navbar-dark bg-dark px-3">
       <span className="navbar-brand mb-0 h1">Dashboard</span>
+
       <div className="dropdown">
         <button
           className="btn btn-dark dropdown-toggle d-flex align-items-center"
@@ -42,9 +33,7 @@ const Header = () => {
         >
           <i className="bi bi-person-circle me-2"></i>
           {nombreUsuario}{" "}
-          {rolUsuario && (
-            <span className="text-muted ms-2">({rolUsuario})</span>
-          )}
+          {rolUsuario && <span className="text-muted ms-2">({rolUsuario})</span>}
         </button>
         <ul
           className="dropdown-menu dropdown-menu-end"

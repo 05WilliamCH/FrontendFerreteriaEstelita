@@ -299,8 +299,11 @@ const Compra = () => {
 
   const handleGuardarCompra = async () => {
     try {
+       const idusuario = localStorage.getItem("idusuario"); // 👈 agregar esto
+
       await axios.post("http://localhost:3000/api/compras", {
         idprov: proveedor,
+        idusuario, // 👈 enviarlo al backend
         fecha: fechaCompra,
         total: totalGeneral,
         productos,

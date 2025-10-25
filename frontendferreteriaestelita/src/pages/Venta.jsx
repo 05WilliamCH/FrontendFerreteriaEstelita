@@ -3,7 +3,7 @@ import { Modal, Button, Form, Table, Alert } from "react-bootstrap";
 import { debounce } from "lodash";
 import { obtenerCategorias } from "../services/categoriaService";
 import { obtenerClientes, crearCliente } from "../services/clienteService";
-import { obtenerProductoPorCodigo } from "../services/productoService";
+import { obtenerProductoPorCodigo, buscarProductoPorNombre } from "../services/productoService";
 import { crearVenta } from "../services/ventaService";
 import { obtenerEstadoCaja } from "../services/cajaService";
 import Swal from "sweetalert2";
@@ -18,7 +18,7 @@ const Venta = () => {
   const [categorias, setCategorias] = useState([]);
   const [clientes, setClientes] = useState([]);
   const [ventaActiva, setVentaActiva] = useState(null);
-  const [montoRecibido, setMontoRecibido] = useState("");
+  const [montorecibido, setMontoRecibido] = useState("");
   const [vuelto, setVuelto] = useState(0);
 
   const [cajaAbierta, setCajaAbierta] = useState(false); // 🔹 Estado de la caja
@@ -240,7 +240,7 @@ const Venta = () => {
       setAlertVenta("Seleccione fecha de venta.");
       return;
     }
-    if (Number(montoRecibido) < totalGeneral) {
+    if (Number(montorecibido) < totalGeneral) {
       setAlertVenta("El monto recibido es menor al total de la venta.");
       return;
     }
@@ -264,11 +264,13 @@ const Venta = () => {
 
   const handleGuardarVenta = async () => {
     try {
+      const idusuario = localStorage.getItem("idusuario"); // 👈 o según como lo manejes
       const ventaCreada = await crearVenta({
         idcliente: cliente,
+        idusuario, // 👈 agrega este campo
         fecha: fechaVenta,
         productos,
-        montorecibido: Number(montoRecibido),
+        montorecibido: Number(montorecibido),
         vuelto: Number(vuelto),
       });
 
@@ -311,8 +313,8 @@ const Venta = () => {
         subtotal: Number(p.cantidad) * Number(p.precio_venta) - Number(p.descuento || 0),
       })),
       total: Number(ventaActiva.total),
-      montoRecibido: Number(montoRecibido),
-      vuelto: Number(vuelto),
+      montorecibido: Number(ventaActiva.montorecibido || ventaActiva.total), // <- usar ventaActiva
+      vuelto: Number(ventaActiva.vuelto || 0),                                // <- usar ventaActiva
     };
 
     const img = new Image();
@@ -324,6 +326,36 @@ const Venta = () => {
     if (!cajaAbierta) return;
     window.open("https://portal.sat.gob.gt/", "_blank");
   };
+
+  const [sugerencias, setSugerencias] = useState([]);
+
+const buscarProductosDebounce = debounce(async (nombre) => {
+  if (!nombre || nombre.length < 2) {
+    setSugerencias([]);
+    return;
+  }
+  try {
+    const resultados = await buscarProductoPorNombre(nombre);
+    setSugerencias(resultados);
+  } catch (error) {
+    console.error("Error buscando productos:", error);
+  }
+}, 400);
+
+const seleccionarProducto = (p) => {
+  setProducto({
+    ...producto,
+    idproducto: p.idproducto,
+    codigo: p.codigo,
+    idcategoria: p.idcategoria,
+    nombreCategoria: getCategoriaNombre(p.idcategoria),
+    nombre: p.nombre,
+    bulto: p.bulto,
+    detalle: p.detalle,
+    precio_venta: p.precio_venta,
+  });
+  setSugerencias([]);
+};
 
   // =========================
   // RENDER
@@ -439,7 +471,7 @@ const Venta = () => {
           <Form.Label className="m-0">Monto recibido:</Form.Label>
           <Form.Control
             type="number"
-            value={montoRecibido}
+            value={montorecibido}
             min="0"
             onChange={(e) => {
               setMontoRecibido(e.target.value);
@@ -470,95 +502,142 @@ const Venta = () => {
 
       {/* MODALES */}
       {/* MODAL PRODUCTO */}
-      <Modal
-        show={showModalProducto}
-        onHide={() => setShowModalProducto(false)}
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>{editIndex !== null ? "Editar producto" : "Agregar producto"}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {alertProducto && (
-            <Alert variant="warning" onClose={() => setAlertProducto("")} dismissible>
-              {alertProducto}
-            </Alert>
-          )}
-          <Form>
-            <Form.Group className="mb-2">
-              <Form.Label>Código</Form.Label>
-              <Form.Control
-                value={producto.codigo}
-                onChange={(e) => {
-                  setProducto({ ...producto, codigo: e.target.value });
-                  if (!editIndex) autocompletarProductoDebounce(e.target.value);
-                }}
-                readOnly={editIndex !== null || !cajaAbierta}
-              />
-            </Form.Group>
-            <Form.Group className="mb-2">
-              <Form.Label>Categoría</Form.Label>
-              <Form.Control value={producto.nombreCategoria} readOnly />
-            </Form.Group>
-            <Form.Group className="mb-2">
-              <Form.Label>Producto</Form.Label>
-              <Form.Control value={producto.nombre} readOnly />
-            </Form.Group>
-            <Form.Group className="mb-2">
-              <Form.Label>Bulto</Form.Label>
-              <Form.Control value={producto.bulto} readOnly />
-            </Form.Group>
-            <Form.Group className="mb-2">
-              <Form.Label>Detalle</Form.Label>
-              <Form.Control value={producto.detalle} readOnly />
-            </Form.Group>
-            <Form.Group className="mb-2">
-              <Form.Label>Cantidad</Form.Label>
-              <Form.Control
-                type="number"
-                min="0"
-                value={producto.cantidad}
-                onChange={(e) =>
-                  setProducto({ ...producto, cantidad: e.target.value.replace("-", "") })
-                }
-                disabled={!cajaAbierta}
-              />
-            </Form.Group>
-            <Form.Group className="mb-2">
-              <Form.Label>Precio Venta</Form.Label>
-              <Form.Control
-                type="number"
-                min="0"
-                value={producto.precio_venta}
-                onChange={(e) =>
-                  setProducto({ ...producto, precio_venta: e.target.value.replace("-", "") })
-                }
-                disabled={!cajaAbierta}
-              />
-            </Form.Group>
-            <Form.Group className="mb-2">
-              <Form.Label>Descuento</Form.Label>
-              <Form.Control
-                type="number"
-                min="0"
-                value={producto.descuento}
-                onChange={(e) =>
-                  setProducto({ ...producto, descuento: e.target.value.replace("-", "") })
-                }
-                disabled={!cajaAbierta}
-              />
-            </Form.Group>
-            <div className="text-end mt-2">
-              <strong>Subtotal: {calcularSubtotal(producto).toFixed(2)}</strong>
-            </div>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowModalProducto(false)} disabled={!cajaAbierta}>Cancelar</Button>
-          <Button variant="success" onClick={handleGuardarProducto} disabled={!cajaAbierta}>Guardar</Button>
-        </Modal.Footer>
-      </Modal>
+    <Modal
+      show={showModalProducto}
+      onHide={() => setShowModalProducto(false)}
+    >
+  <Modal.Header closeButton>
+    <Modal.Title>{editIndex !== null ? "Editar producto" : "Agregar producto"}</Modal.Title>
+  </Modal.Header>
+  <Modal.Body>
+    {alertProducto && (
+      <Alert variant="warning" onClose={() => setAlertProducto("")} dismissible>
+        {alertProducto}
+      </Alert>
+    )}
+    <Form>
+      {/* ========================== */}
+      {/* BUSCAR POR CÓDIGO */}
+      {/* ========================== */}
+      <Form.Group className="mb-2">
+        <Form.Label>Código</Form.Label>
+        <Form.Control
+          value={producto.codigo}
+          onChange={(e) => {
+            setProducto({ ...producto, codigo: e.target.value });
+            if (!editIndex) autocompletarProductoDebounce(e.target.value);
+          }}
+          readOnly={editIndex !== null || !cajaAbierta}
+        />
+      </Form.Group>
 
-      {/* MODAL CLIENTE */}
+      {/* ========================== */}
+      {/* BUSCAR POR NOMBRE */}
+      {/* ========================== */}
+      <Form.Group className="mb-2 position-relative">
+        <Form.Label>Buscar por nombre</Form.Label>
+        <Form.Control
+          type="text"
+          value={producto.nombre}
+          placeholder="Escriba el nombre del producto..."
+          onChange={(e) => {
+            const valor = e.target.value;
+            setProducto({ ...producto, nombre: valor });
+            if (!editIndex) buscarProductosDebounce(valor);
+          }}
+          disabled={!cajaAbierta}
+        />
+        {/* SUGERENCIAS */}
+        {sugerencias.length > 0 && (
+          <div
+            className="position-absolute bg-white border rounded shadow-sm"
+            style={{
+              zIndex: 1000,
+              width: "100%",
+              maxHeight: "150px",
+              overflowY: "auto",
+            }}
+          >
+            {sugerencias.map((p) => (
+              <div
+                key={p.idproducto}
+                className="p-2 hover:bg-light"
+                onClick={() => seleccionarProducto(p)}
+                style={{ cursor: "pointer" }}
+              >
+                {p.nombre} — Q{p.precio_venta}
+              </div>
+            ))}
+          </div>
+        )}
+      </Form.Group>
+
+      <Form.Group className="mb-2">
+        <Form.Label>Categoría</Form.Label>
+        <Form.Control value={producto.nombreCategoria} readOnly />
+      </Form.Group>
+
+      <Form.Group className="mb-2">
+        <Form.Label>Bulto</Form.Label>
+        <Form.Control value={producto.bulto} readOnly />
+      </Form.Group>
+
+      <Form.Group className="mb-2">
+        <Form.Label>Detalle</Form.Label>
+        <Form.Control value={producto.detalle} readOnly />
+      </Form.Group>
+
+      <Form.Group className="mb-2">
+        <Form.Label>Cantidad</Form.Label>
+        <Form.Control
+          type="number"
+          min="0"
+          value={producto.cantidad}
+          onChange={(e) =>
+            setProducto({ ...producto, cantidad: e.target.value.replace("-", "") })
+          }
+          disabled={!cajaAbierta}
+        />
+      </Form.Group>
+
+      <Form.Group className="mb-2">
+        <Form.Label>Precio Venta</Form.Label>
+        <Form.Control
+          type="number"
+          min="0"
+          value={producto.precio_venta}
+          onChange={(e) =>
+            setProducto({ ...producto, precio_venta: e.target.value.replace("-", "") })
+          }
+          disabled={!cajaAbierta}
+        />
+      </Form.Group>
+
+      <Form.Group className="mb-2">
+        <Form.Label>Descuento</Form.Label>
+        <Form.Control
+          type="number"
+          min="0"
+          value={producto.descuento}
+          onChange={(e) =>
+            setProducto({ ...producto, descuento: e.target.value.replace("-", "") })
+          }
+          disabled={!cajaAbierta}
+        />
+      </Form.Group>
+
+      <div className="text-end mt-2">
+        <strong>Subtotal: {calcularSubtotal(producto).toFixed(2)}</strong>
+      </div>
+    </Form>
+  </Modal.Body>
+  <Modal.Footer>
+    <Button variant="secondary" onClick={() => setShowModalProducto(false)} disabled={!cajaAbierta}>Cancelar</Button>
+    <Button variant="success" onClick={handleGuardarProducto} disabled={!cajaAbierta}>Guardar</Button>
+  </Modal.Footer>
+</Modal>
+
+{/* MODAL CLIENTE */}
       <Modal
         show={showModalCliente}
         onHide={() => setShowModalCliente(false)}
@@ -620,6 +699,7 @@ const Venta = () => {
           <Button variant="success" onClick={handleGuardarCliente} disabled={!cajaAbierta}>Guardar</Button>
         </Modal.Footer>
       </Modal>
+
     </div>
   );
 };

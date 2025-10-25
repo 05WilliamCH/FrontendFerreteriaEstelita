@@ -40,7 +40,9 @@ export const generarPDFVenta = (venta, logoBase64) => {
   doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
   doc.text(`Factura No: ${venta.numeroFactura}`, leftX, topY);
-  doc.text(`Fecha: ${new Date(venta.fecha).toLocaleDateString()}`, rightX, topY);
+  const fechaLocal = new Date(venta.fecha);
+  fechaLocal.setHours(fechaLocal.getHours() + 6); // Ajusta UTC-6 (Guatemala)
+  doc.text(`Fecha: ${fechaLocal.toLocaleDateString("es-GT")}`, rightX, topY);
 
   // Datos del cliente
   doc.setFont("helvetica", "normal");

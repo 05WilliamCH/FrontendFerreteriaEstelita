@@ -26,9 +26,13 @@ const Login = () => {
         password,
       });
 
-      // ✅ Usamos el hook para guardar token y rol
-      login(res.data.token, res.data.usuario.idrol);
+        // ✅ Extraer datos del usuario
+      const { token, usuario } = res.data;
+
+       // ✅ Guardamos token, rol e idusuario en localStorage con el hook useAuth
+      login(token, usuario.idrol, usuario.idusuario, usuario.nombre);
     } catch (err) {
+      console.error(err);
       setError("❌ Usuario o contraseña incorrectos");
     }
   };
