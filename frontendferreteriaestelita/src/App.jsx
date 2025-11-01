@@ -18,8 +18,12 @@ import Compra from "./pages/Compra";
 
 import Productos from "./pages/Producto";
 import Inventario from "./pages/Inventario";
+import InvDashboard from "./pages/InvDashboard";
+
+import Kardex from "./pages/Kardex";
 
 import Venta from "./pages/Venta";
+import VentaDetalle from "./pages/VentaDetalle";
 
 import Caja from "./pages/Caja";
 import RCaja from "./pages/RCaja";
@@ -305,6 +309,45 @@ function App() {
               element={
                 <DashboardLayout>
                   <RCaja />
+                </DashboardLayout>
+              }
+            />
+          }
+        />
+
+        <Route
+          path="/inventario/kardex"
+          element={
+            <PrivateRoute
+              element={
+                <DashboardLayout>
+                  <Kardex />
+                </DashboardLayout>
+              }
+            />
+          }
+        />
+
+        <Route
+          path="/inventario/dashboard"
+          element={
+            <PrivateRoute
+              element={
+                <DashboardLayout>
+                  <InvDashboard />
+                </DashboardLayout>
+              }
+            />
+          }
+        />
+
+        <Route
+          path="/inventario/Ventasdetalle"
+          element={
+            <PrivateRoute
+              element={
+                <DashboardLayout>
+                  <VentaDetalle />
                 </DashboardLayout>
               }
             />

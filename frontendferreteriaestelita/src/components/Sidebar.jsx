@@ -121,6 +121,21 @@ const Sidebar = () => {
                     Agregar precios
                   </Link>
                 </li>
+                <li>
+                  <Link to="/inventario/kardex" className="nav-link text-white ms-4">
+                    Kardex
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/inventario/dashboard" className="nav-link text-white ms-4">
+                    Dashboard
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/inventario/Ventasdetalle" className="nav-link text-white ms-4">
+                    Detalle de ventas
+                  </Link>
+                </li>
               </ul>
             </div>
           </li>
