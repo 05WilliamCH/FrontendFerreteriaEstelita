@@ -1,18 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Modal, Button, Form, Table, Alert } from "react-bootstrap";
 import { debounce } from "lodash";
-import {
-  obtenerCategorias,
-  crearCategoria,
-} from "../services/categoriaService";
-import {
-  obtenerProveedores,
-  crearProveedor,
-} from "../services/proveedorService";
+import { obtenerCategorias, crearCategoria } from "../services/categoriaService";
+import { obtenerProveedores, crearProveedor } from "../services/proveedorService";
 import { obtenerProductoPorCodigo } from "../services/productoService";
 import axios from "axios";
 import Swal from "sweetalert2";
 import "@sweetalert2/theme-bootstrap-4/bootstrap-4.min.css";
+import { generarPDFCompra } from "../utils/pdfCompras";
+import logo from "../assets/ESTELITA.jpeg"; // ✅ tu logo
 
 const Compra = () => {
   const [proveedor, setProveedor] = useState("");
@@ -20,12 +16,14 @@ const Compra = () => {
   const [productos, setProductos] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [proveedores, setProveedores] = useState([]);
+  const [compraGuardada, setCompraGuardada] = useState(null);
 
-  // ----- MODALES -----
+
+  // MODALES
   const [showModalProducto, setShowModalProducto] = useState(false);
   const [showModalProveedor, setShowModalProveedor] = useState(false);
 
-  // ----- PRODUCTO -----
+  // PRODUCTO
   const [producto, setProducto] = useState({
     idproducto: null,
     codigo: "",
@@ -42,7 +40,7 @@ const Compra = () => {
   const [editIndex, setEditIndex] = useState(null);
   const [nuevaCategoria, setNuevaCategoria] = useState(false);
 
-  // ----- PROVEEDOR -----
+  // PROVEEDOR
   const [nuevoProveedor, setNuevoProveedor] = useState({
     nombre: "",
     telefono: "",
@@ -51,78 +49,41 @@ const Compra = () => {
     email: "",
   });
 
-  // ----- ALERTAS -----
+  // ALERTAS
   const [alertProducto, setAlertProducto] = useState("");
   const [alertProveedor, setAlertProveedor] = useState("");
   const [alertCompra, setAlertCompra] = useState("");
 
-  // =========================
   // ALERTAS AUTOMÁTICAS
-  // =========================
-  useEffect(() => {
-    if (alertProducto) {
-      const timer = setTimeout(() => setAlertProducto(""), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [alertProducto]);
+  useEffect(() => { if(alertProducto){ const t=setTimeout(()=>setAlertProducto(""),3000); return ()=>clearTimeout(t); } }, [alertProducto]);
+  useEffect(() => { if(alertProveedor){ const t=setTimeout(()=>setAlertProveedor(""),3000); return ()=>clearTimeout(t); } }, [alertProveedor]);
+  useEffect(() => { if(alertCompra){ const t=setTimeout(()=>setAlertCompra(""),3000); return ()=>clearTimeout(t); } }, [alertCompra]);
 
-  useEffect(() => {
-    if (alertProveedor) {
-      const timer = setTimeout(() => setAlertProveedor(""), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [alertProveedor]);
-
-  useEffect(() => {
-    if (alertCompra) {
-      const timer = setTimeout(() => setAlertCompra(""), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [alertCompra]);
-
-  // =========================
-  // Cargar Categorías y Proveedores
-  // =========================
+  // CARGAR CATEGORÍAS Y PROVEEDORES
   useEffect(() => {
     const fetchData = async () => {
       try {
         const catData = await obtenerCategorias();
         setCategorias(catData);
-
         const provData = await obtenerProveedores();
         setProveedores(provData);
-      } catch (error) {
-        console.error("Error cargando datos:", error);
-      }
+      } catch (error) { console.error("Error cargando datos:", error); }
     };
     fetchData();
   }, []);
 
-  // =========================
-  // Funciones auxiliares
-  // =========================
-  const getCategoriaNombre = (id) => {
-    const cat = categorias.find((c) => c.idcategoria === Number(id));
-    return cat ? cat.nombre : "";
-  };
+  // FUNCIONES AUXILIARES
+  const getCategoriaNombre = (id) => categorias.find(c => c.idcategoria === Number(id))?.nombre || "";
+  const calcularSubtotal = (p) => (Number(p.cantidad) || 0) * (Number(p.precio) || 0) - (Number(p.descuento)||0);
+  const totalGeneral = productos.reduce((acc,p)=>acc+calcularSubtotal(p),0);
 
-  const calcularSubtotal = (p) =>
-    (Number(p.cantidad) || 0) * (Number(p.precio) || 0) - (Number(p.descuento) || 0);
-
-  const totalGeneral = productos.reduce(
-    (acc, p) => acc + calcularSubtotal(p),
-    0
-  );
-
-  // =========================
-  // Autocompletar producto
-  // =========================
-  const autocompletarProductoDebounce = debounce(async (codigo) => {
-    if (!codigo || codigo.length < 3) return;
-    try {
+  // AUTOCOMPLETAR PRODUCTO
+  const autocompletarProductoDebounce = debounce(async (codigo)=>{
+    if(!codigo || codigo.length<3) return;
+    try{
       const prod = await obtenerProductoPorCodigo(codigo);
-      if (prod) {
-        setProducto((prev) => ({
+      if(prod){
+        setProducto(prev=>({
           ...prev,
           idproducto: prod.idproducto,
           nombre: prod.nombre,
@@ -136,246 +97,172 @@ const Compra = () => {
           descuento: prev.descuento || 0,
         }));
       } else {
-        setProducto((prev) => ({
-          ...prev,
-          idproducto: null,
-          nombre: "",
-          idcategoria: "",
-          nombreCategoria: "",
-          bulto: "",
-          detalle: "",
-          precio: prev.precio || 0,
-          fecha_vencimiento: "",
-        }));
+        setProducto(prev=>({...prev,idproducto:null,nombre:"",idcategoria:"",nombreCategoria:"",bulto:"",detalle:"",precio:prev.precio||0,fecha_vencimiento:""}));
       }
-    } catch (error) {
-      console.error("Error obteniendo producto:", error);
-    }
-  }, 500);
+    } catch(e){ console.error("Error obteniendo producto:",e); }
+  },500);
 
-  // =========================
-  // PRODUCTOS
-  // =========================
+  // AGREGAR / EDITAR PRODUCTOS
   const handleAgregarProducto = () => {
-    if (!proveedor) {
-      setAlertCompra("Seleccione un proveedor antes de agregar productos.");
-      return;
-    }
+    if(!proveedor){ setAlertCompra("Seleccione un proveedor antes de agregar productos."); return; }
     setEditIndex(null);
-    setProducto({
-      idproducto: null,
-      codigo: "",
-      idcategoria: "",
-      nombreCategoria: "",
-      nombre: "",
-      bulto: "",
-      detalle: "",
-      fecha_vencimiento: "",
-      cantidad: "",
-      precio: "",
-      descuento: "",
-    });
+    setProducto({idproducto:null,codigo:"",idcategoria:"",nombreCategoria:"",nombre:"",bulto:"",detalle:"",fecha_vencimiento:"",cantidad:"",precio:"",descuento:""});
     setNuevaCategoria(false);
     setAlertProducto("");
     setShowModalProducto(true);
   };
 
   const handleGuardarProducto = async () => {
-    if (!producto.codigo || !producto.nombre || (!producto.idcategoria && !producto.nombreCategoria)) {
-      setAlertProducto("Complete código, nombre y categoría.");
-      return;
-    }
-    if ((Number(producto.cantidad) || 0) <= 0 || (Number(producto.precio) || 0) <= 0) {
-      setAlertProducto("Cantidad y precio deben ser mayores a 0.");
-      return;
-    }
+    if(!producto.codigo||!producto.nombre||(!producto.idcategoria&&!producto.nombreCategoria)){ setAlertProducto("Complete código, nombre y categoría."); return; }
+    if((Number(producto.cantidad)||0)<=0||(Number(producto.precio)||0)<=0){ setAlertProducto("Cantidad y precio deben ser mayores a 0."); return; }
 
     let idcategoriaFinal = producto.idcategoria;
     let nombreCategoriaFinal = producto.nombreCategoria;
 
-    if (!editIndex && nuevaCategoria && producto.nombreCategoria.trim() !== "") {
-      try {
-        const nueva = await crearCategoria({ nombre: producto.nombreCategoria });
-        idcategoriaFinal = nueva.idcategoria;
-        nombreCategoriaFinal = nueva.nombre;
-        setCategorias([...categorias, nueva]);
-      } catch (error) {
-        setAlertProducto("No se pudo crear la categoría.");
-        return;
-      }
+    if(!editIndex && nuevaCategoria && producto.nombreCategoria.trim()!==""){
+      try{
+        const nueva = await crearCategoria({nombre: producto.nombreCategoria});
+        idcategoriaFinal=nueva.idcategoria;
+        nombreCategoriaFinal=nueva.nombre;
+        setCategorias([...categorias,nueva]);
+      } catch(e){ setAlertProducto("No se pudo crear la categoría."); return; }
     }
 
-    const productoFinal = {
-      ...producto,
-      idcategoria: idcategoriaFinal,
-      nombreCategoria: nombreCategoriaFinal || getCategoriaNombre(idcategoriaFinal),
-    };
+    const productoFinal = {...producto,idcategoria:idcategoriaFinal,nombreCategoria:nombreCategoriaFinal||getCategoriaNombre(idcategoriaFinal)};
 
-    if (editIndex !== null) {
-      const nuevos = [...productos];
-      nuevos[editIndex] = {
-        ...nuevos[editIndex],
-        cantidad: productoFinal.cantidad,
-        precio: productoFinal.precio,
-        descuento: productoFinal.descuento,
-      };
+    if(editIndex!==null){
+      const nuevos=[...productos];
+      nuevos[editIndex]={...nuevos[editIndex],cantidad:productoFinal.cantidad,precio:productoFinal.precio,descuento:productoFinal.descuento};
       setProductos(nuevos);
     } else {
-      if (productos.some((p) => p.codigo === productoFinal.codigo)) {
-        setAlertProducto("Este producto ya está agregado.");
-        return;
-      }
-      setProductos([...productos, productoFinal]);
+      if(productos.some(p=>p.codigo===productoFinal.codigo)){ setAlertProducto("Este producto ya está agregado."); return; }
+      setProductos([...productos,productoFinal]);
     }
 
     setShowModalProducto(false);
   };
 
-  const handleEditarProducto = (index) => {
-    setEditIndex(index);
-    setProducto(productos[index]);
-    setNuevaCategoria(false);
-    setAlertProducto("");
-    setShowModalProducto(true);
-  };
+  const handleEditarProducto = (index) => { setEditIndex(index); setProducto(productos[index]); setNuevaCategoria(false); setAlertProducto(""); setShowModalProducto(true); };
+  const handleEliminarProducto = (index) => { if(window.confirm("¿Desea eliminar este producto?")) setProductos(productos.filter((_,i)=>i!==index)); };
 
-  const handleEliminarProducto = (index) => {
-    if (window.confirm("¿Desea eliminar este producto?")) {
-      setProductos(productos.filter((_, i) => i !== index));
-    }
-  };
-
-  // =========================
   // PROVEEDOR
-  // =========================
   const handleGuardarProveedor = async () => {
-    if (!nuevoProveedor.nombre) {
-      setAlertProveedor("Ingrese el nombre del proveedor.");
-      return;
-    }
-    try {
+    if(!nuevoProveedor.nombre){ setAlertProveedor("Ingrese el nombre del proveedor."); return; }
+    try{
       const nuevo = await crearProveedor(nuevoProveedor);
-      setProveedores([...proveedores, nuevo]);
+      setProveedores([...proveedores,nuevo]);
       setProveedor(nuevo.idprov);
       setShowModalProveedor(false);
-      setNuevoProveedor({ nombre: "", telefono: "", nit: "", direccion: "", email: "" });
+      setNuevoProveedor({nombre:"",telefono:"",nit:"",direccion:"",email:""});
       setAlertProveedor("");
-    } catch (error) {
-      setAlertProveedor("No se pudo crear el proveedor.");
-    }
+    } catch(e){ setAlertProveedor("No se pudo crear el proveedor."); }
   };
 
-  // =========================
-  // COMPRA con SweetAlert2
-  // =========================
+  // GUARDAR COMPRA
   const handleConfirmarCompra = () => {
-    if (!proveedor || productos.length === 0) {
-      setAlertCompra("Seleccione proveedor y agregue productos.");
-      return;
-    }
-    if (!fechaCompra) {
-      setAlertCompra("Seleccione fecha de compra.");
-      return;
-    }
+    if(!proveedor||productos.length===0){ setAlertCompra("Seleccione proveedor y agregue productos."); return; }
+    if(!fechaCompra){ setAlertCompra("Seleccione fecha de compra."); return; }
 
     Swal.fire({
-      title: "¿Está seguro de guardar la compra?",
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonText: "Sí, Guardar",
-      cancelButtonText: "Cancelar",
-      reverseButtons: true,
-      customClass: {
-        confirmButton: "btn btn-success",
-        cancelButton: "btn btn-secondary",
-      },
-      buttonsStyling: false,
-    }).then((result) => {
-      if (result.isConfirmed) {
-        handleGuardarCompra();
-      }
-    });
+      title:"¿Está seguro de guardar la compra?",
+      icon:"question",
+      showCancelButton:true,
+      confirmButtonText:"Sí, Guardar",
+      cancelButtonText:"Cancelar",
+      reverseButtons:true,
+      customClass:{confirmButton:"btn btn-success",cancelButton:"btn btn-secondary"},
+      buttonsStyling:false
+    }).then((result)=>{ if(result.isConfirmed) handleGuardarCompra(); });
   };
 
   const handleGuardarCompra = async () => {
-    try {
-       const idusuario = localStorage.getItem("idusuario"); // 👈 agregar esto
+  try {
+    const idusuario = localStorage.getItem("idusuario");
 
-      await axios.post("http://localhost:3000/api/compras", {
-        idprov: proveedor,
-        idusuario, // 👈 enviarlo al backend
-        fecha: fechaCompra,
-        total: totalGeneral,
-        productos,
-      });
-      setProductos([]);
-      setFechaCompra("");
-      setProveedor("");
-      setAlertCompra("");
+    const res = await axios.post("http://localhost:3000/api/compras", {
+  idprov: proveedor,
+  idusuario,
+  fecha: fechaCompra,
+  total: totalGeneral,
+  productos
+});
 
-      Swal.fire({
-        title: "Compra Exitosa",
-        text: "La compra se ha registrado correctamente",
-        icon: "success",
-        confirmButtonText: "Aceptar",
-        customClass: {
-          confirmButton: "btn btn-success",
-        },
-        buttonsStyling: false,
-      });
-    } catch (error) {
-      setAlertCompra("No se pudo registrar la compra.");
-    }
+const compraAPI = res.data.compra; // ✅ aquí tienes toda la info de la compra
+
+const nuevaCompra = {
+  numeroCompra: res.data.compra.numerocompra || "TEMP", // usar "compra.numerocompra"
+  fecha: res.data.compra.fecha || fechaCompra,
+  proveedor: proveedores.find((p) => p.idprov === Number(proveedor)) || {},
+  productos: productos,
+  total: totalGeneral,
+};
+
+// Limpiar formulario
+setProductos([]);
+setFechaCompra("");
+setProveedor("");
+
+// Guardar para PDF
+setCompraGuardada(nuevaCompra);
+
+Swal.fire({
+  title: "Compra Exitosa",
+  text: `Compra ${compraAPI.numerocompra} registrada correctamente`,
+  icon: "success",
+  confirmButtonText: "Aceptar",
+  customClass: { confirmButton: "btn btn-success" },
+  buttonsStyling: false,
+});
+
+    
+  } catch (e) {
+    console.error("Error guardar compra:", e);
+    setAlertCompra("No se pudo registrar la compra.");
+  }
+};
+
+ // FUNCIÓN PARA GENERAR PDF CON LOGO
+  const generarPDF = async () => {
+    if(!compraGuardada) return;
+
+    // Convertir logo a Base64
+    const response = await fetch(logo);
+    const blob = await response.blob();
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const logoBase64 = reader.result;
+      generarPDFCompra(compraGuardada, logoBase64);
+    };
+    reader.readAsDataURL(blob);
   };
 
-  // =========================
+
   // RENDER
-  // =========================
   return (
     <div className="container mt-4">
       <h3>COMPRA</h3>
-
-      {alertCompra && <Alert variant="warning" onClose={() => setAlertCompra("")} dismissible>{alertCompra}</Alert>}
+      {alertCompra && <Alert variant="warning" onClose={()=>setAlertCompra("")} dismissible>{alertCompra}</Alert>}
 
       <div className="d-flex align-items-center mb-3">
-        <Form.Select
-          value={proveedor}
-          onChange={(e) => setProveedor(e.target.value)}
-          className="me-2"
-        >
+        <Form.Select value={proveedor} onChange={(e)=>setProveedor(e.target.value)} className="me-2">
           <option value="">Seleccione proveedor</option>
-          {proveedores.map((p) => (
-            <option key={p.idprov} value={p.idprov}>{p.nombre}</option>
-          ))}
+          {proveedores.map(p=><option key={p.idprov} value={p.idprov}>{p.nombre}</option>)}
         </Form.Select>
-        <Button variant="primary" className="me-2" onClick={() => setShowModalProveedor(true)}>+ Nuevo Proveedor</Button>
+        <Button variant="primary" className="me-2" onClick={()=>setShowModalProveedor(true)}>+ Nuevo Proveedor</Button>
         <Button variant="success" onClick={handleAgregarProducto} className="me-2">+ Añadir producto</Button>
-        <Form.Control type="date" value={fechaCompra} onChange={(e) => setFechaCompra(e.target.value)} style={{ maxWidth: "200px" }} />
+        <Form.Control type="date" value={fechaCompra} onChange={(e)=>setFechaCompra(e.target.value)} style={{maxWidth:"200px"}}/>
       </div>
 
-      {/* TABLA PRODUCTOS */}
       <Table striped bordered hover>
         <thead className="table-success">
           <tr>
-            <th>CÓDIGO</th>
-            <th>CATEGORÍA</th>
-            <th>PRODUCTO</th>
-            <th>BULTO</th>
-            <th>DETALLE</th>
-            <th>FECHA VENCIMIENTO</th>
-            <th>CANTIDAD</th>
-            <th>PRECIO</th>
-            <th>DESCUENTO</th>
-            <th>SUBTOTAL</th>
-            <th>ACCIONES</th>
+            <th>CÓDIGO</th><th>CATEGORÍA</th><th>PRODUCTO</th><th>BULTO</th><th>DETALLE</th>
+            <th>FECHA VENCIMIENTO</th><th>CANTIDAD</th><th>PRECIO</th><th>DESCUENTO</th><th>SUBTOTAL</th><th>ACCIONES</th>
           </tr>
         </thead>
         <tbody>
-          {productos.length === 0 ? (
-            <tr>
-              <td colSpan="11" className="text-center">No hay productos agregados</td>
-            </tr>
-          ) : productos.map((p, index) => (
+          {productos.length===0 ? <tr><td colSpan="11" className="text-center">No hay productos agregados</td></tr>
+          : productos.map((p,index)=>(
             <tr key={index}>
               <td>{p.codigo}</td>
               <td>{p.nombreCategoria}</td>
@@ -388,8 +275,8 @@ const Compra = () => {
               <td>{p.descuento}</td>
               <td>{calcularSubtotal(p).toFixed(2)}</td>
               <td>
-                <Button variant="outline-primary" size="sm" className="me-2" onClick={() => handleEditarProducto(index)}>✏️</Button>
-                <Button variant="outline-danger" size="sm" onClick={() => handleEliminarProducto(index)}>🗑️</Button>
+                <Button variant="outline-primary" size="sm" className="me-2" onClick={()=>handleEditarProducto(index)}>✏️</Button>
+                <Button variant="outline-danger" size="sm" onClick={()=>handleEliminarProducto(index)}>🗑️</Button>
               </td>
             </tr>
           ))}
@@ -398,10 +285,12 @@ const Compra = () => {
 
       <div className="d-flex justify-content-end align-items-center mb-3">
         <strong className="me-2">Precio total:</strong>
-        <Form.Control type="text" value={totalGeneral.toFixed(2)} readOnly style={{ maxWidth: "150px" }} />
+        <Form.Control type="text" value={totalGeneral.toFixed(2)} readOnly style={{maxWidth:"150px"}}/>
       </div>
 
       <Button variant="success" className="mb-4" onClick={handleConfirmarCompra}>Guardar Compra</Button>
+      
+      <Button variant="secondary" className="mb-4" disabled={!compraGuardada} onClick={generarPDF}>Imprimir</Button>
 
       {/* MODAL PRODUCTO */}
       <Modal show={showModalProducto} onHide={() => setShowModalProducto(false)}>

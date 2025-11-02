@@ -136,6 +136,11 @@ const Sidebar = () => {
                     Detalle de ventas
                   </Link>
                 </li>
+                <li>
+                  <Link to="/inventario/Comprasdetalle" className="nav-link text-white ms-4">
+                    Detalle de compras
+                  </Link>
+                </li>
               </ul>
             </div>
           </li>
