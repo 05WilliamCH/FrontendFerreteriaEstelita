@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { obtenerDetalleCompra } from "../services/compraDetalleService";
 import { Container, Card, Table, Form, Button, Row, Col, Alert } from "react-bootstrap";
-import { generarPDFCompra } from "../utils/pdfCompras"; // función para PDF de compras
+import { generarPDFCompra } from "../utils/pdfComprasDetalle"; // función para PDF de compras
 import logoBase64 from "../assets/ESTELITA.jpeg";
 
 const DetalleCompra = () => {
@@ -38,8 +38,17 @@ const DetalleCompra = () => {
       },
       usuario: compra.usuario,
       productos: detalle.map(item => ({
-        ...item,
-        precio_compra: item.precio_compra,
+        codigo: item.codigo,
+        nombre: item.nombre,
+        nombreCategoria: item.categoria || item.nombreCategoria,
+        bulto: item.bulto || "",
+        detalle: item.detalle || "",
+        presentacion: item.presentacion || "",
+        observaciones: item.observaciones || "",
+        cantidad: Number(item.cantidad) || 0,
+        precio: Number(item.precio_unitario) || 0,
+        precio_venta: Number(item.precio_venta) || 0,
+        descuento: Number(item.descuento) || 0,
       })),
     };
 
@@ -87,14 +96,12 @@ const DetalleCompra = () => {
               </Row>
               <Row>
                 <Col><b>Atendido por:</b> {compra.usuario}</Col>
-              </Row>
-              <Row className="mt-2">
-                <Col><b>Total:</b> Q{compra.total}</Col>
+                <Col><b>Total:</b> Q{Number(compra.total || 0).toFixed(2)}</Col>
               </Row>
             </Card>
 
             <Button variant="success" className="w-100 mt-3" onClick={descargarPDF}>
-                IMPRIMIR PDF
+              IMPRIMIR PDF
             </Button>
 
             <Card className="p-3 mt-3">
@@ -104,25 +111,38 @@ const DetalleCompra = () => {
                   <tr>
                     <th>Código</th>
                     <th>Producto</th>
+                    <th>Categoría</th>
+                    <th>Bulto</th>
+                    <th>Detalle</th>
+                    <th>Presentación</th>
+                    <th>Observaciones</th>
                     <th>Cantidad</th>
                     <th>Precio Compra</th>
-                    <th>Precio Unitario</th>
+                    <th>Precio Venta</th>
                     <th>Descuento</th>
                     <th>Subtotal</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {detalle.map((item, idx) => (
-                    <tr key={idx}>
-                      <td>{item.codigo}</td>
-                      <td>{item.nombre}</td>
-                      <td>{item.cantidad}</td>
-                      <td>Q{item.precio_compra}</td>
-                      <td>Q{item.precio_unitario}</td>
-                      <td>Q{item.descuento}</td>
-                      <td>Q{item.subtotal}</td>
-                    </tr>
-                  ))}
+                  {detalle.map((item, idx) => {
+                    const subtotal = (Number(item.cantidad) * Number(item.precio_unitario)) - (Number(item.descuento) || 0);
+                    return (
+                      <tr key={idx}>
+                        <td>{item.codigo}</td>
+                        <td>{item.nombre}</td>
+                        <td>{item.categoria || item.nombreCategoria}</td>
+                        <td>{item.bulto || ""}</td>
+                        <td>{item.detalle || ""}</td>
+                        <td>{item.presentacion || ""}</td>
+                        <td>{item.observaciones || ""}</td>
+                        <td>{item.cantidad}</td>
+                        <td>Q{Number(item.precio_unitario).toFixed(2)}</td>
+                        <td>Q{Number(item.precio_venta || 0).toFixed(2)}</td>
+                        <td>Q{Number(item.descuento || 0).toFixed(2)}</td>
+                        <td>Q{subtotal.toFixed(2)}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </Table>
             </Card>

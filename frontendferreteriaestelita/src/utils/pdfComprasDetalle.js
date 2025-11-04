@@ -48,7 +48,7 @@ export const generarPDFCompra = (compra, logoBase64) => {
   doc.text(`NIT: ${prov.nit || "-"}`, leftX, topY + 16);
   doc.text(`Teléfono: ${prov.telefono || "-"}`, rightX, topY + 10);
   doc.text(`Dirección: ${prov.direccion || "-"}`, rightX, topY + 16);
-  // doc.text(`Atendido por: ${compra.usuario || "-"}`, leftX, topY + 22);
+  doc.text(`Atendido por: ${compra.usuario || "-"}`, leftX, topY + 22);
   doc.text(`Total Compra: Q${Number(compra.total || 0).toFixed(2)}`, rightX, topY + 22);
 
   // -----------------------------

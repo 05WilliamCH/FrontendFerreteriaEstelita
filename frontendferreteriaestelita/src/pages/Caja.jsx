@@ -1,13 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { abrirCaja, cerrarCaja, obtenerEstadoCaja } from "../services/cajaService";
 import Swal from "sweetalert2";
+import useAuth from "../hooks/useAuth"; // Asegúrate de que tu hook esté en esta ruta
 
 const Caja = () => {
   const [estadoCaja, setEstadoCaja] = useState(null);
   const [montoInicial, setMontoInicial] = useState("");
   const [montoFinal, setMontoFinal] = useState("");
   const [diferencia, setDiferencia] = useState(0);
-  const [idusuario, setIdusuario] = useState(1); // Cambiar según login real
+  // const [idusuario, setIdusuario] = useState(0); // Cambiar según login real
+
+  // ✅ Obtener datos del usuario logueado
+  const { idusuario, nombre } = useAuth();
 
   useEffect(() => {
     cargarEstadoCaja();
@@ -182,6 +186,10 @@ const Caja = () => {
             </button>
           </>
         )}
+      </div>
+      {/* Info del usuario */}
+      <div className="text-center mt-3 text-muted">
+        <small>Sesión activa: {nombre || "Usuario desconocido"}</small>
       </div>
     </div>
   );

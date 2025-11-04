@@ -33,9 +33,17 @@ const Login = () => {
       login(token, usuario.idrol, usuario.idusuario, usuario.nombre);
     } catch (err) {
       console.error(err);
+      // ✅ Mostrar mensaje de error personalizado si el backend lo envía
+    if (err.response && err.response.data && err.response.data.error) {
+      setError(`❌ ${err.response.data.error}`);
+    } else {
       setError("❌ Usuario o contraseña incorrectos");
     }
+    }
   };
+
+  const [mostrarPassword, setMostrarPassword] = useState(false);
+
 
   return (
     <div className="login-container d-flex align-items-center justify-content-center vh-100">
@@ -67,13 +75,20 @@ const Login = () => {
               <i className="bi bi-lock"></i>
             </span>
             <input
-              type="password"
+               type={mostrarPassword ? "text" : "password"}
               className="form-control border-0 border-bottom shadow-sm"
               placeholder="CONTRASEÑA"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
+            <span
+              className="input-group-text bg-white border-0"
+              style={{ cursor: "pointer" }}
+              onClick={() => setMostrarPassword(!mostrarPassword)}
+            >
+              <i className={mostrarPassword ? "bi bi-eye-slash" : "bi bi-eye"}></i>
+            </span>
           </div>
           <button type="submit" className="btn btn-gradient w-100 fw-bold">
             INICIAR SESIÓN
