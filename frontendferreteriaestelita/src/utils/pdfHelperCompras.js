@@ -21,9 +21,9 @@ export const exportarPDFCompras = (reporte, logoBase64, fechaInicio, fechaFin) =
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
-  doc.text("NIT: 12345678-9", pageWidth / 2, 26, { align: "center" });
+  // doc.text("NIT: 12345678-9", pageWidth / 2, 26, { align: "center" });
   doc.text("Dirección: Caserío Cooperativa, Aldea El Tablón", pageWidth / 2, 31, { align: "center" });
-  doc.text("Tel: (502) 1234-5678 | Email: contacto@laestelita.com", pageWidth / 2, 36, { align: "center" });
+  doc.text("Tel: (502) 5436-3645 | Email: contacto@laestelita.com", pageWidth / 2, 36, { align: "center" });
 
   // ========================
   // TÍTULO DEL REPORTE
@@ -45,43 +45,67 @@ export const exportarPDFCompras = (reporte, logoBase64, fechaInicio, fechaFin) =
   // ========================
   const tableColumn = [
     "#",
+    "N°Compra",
     "Fecha",
     "Usuario",
-    "Proveedor",
-    "Cantidad Productos",
-    "Unidades Compradas",
+    "Prov.",
+    "Cant",
+    "Unid.",
+    "Subt. Q.",
+    "Desc. Q.",
     "Total Q.",
   ];
 
-  const tableRows = reporte.map((compra, index) => [
-    index + 1,
-    compra.fecha_compra,
-    compra.usuario,
-    compra.proveedor || "",
-    compra.cantidad_productos,
-    compra.unidades_compradas,
-    Number(compra.total_compra).toFixed(2),
-  ]);
+  const tableRows = reporte.map((compra, index) => {
+    // ✅ Cálculo unificado — igual que en el frontend
+    const subtotal =
+      (parseFloat(compra.total_compra) || 0) +
+      (parseFloat(compra.total_descuento) || 0);
+
+    const descuento = parseFloat(compra.total_descuento || 0);
+    const total = parseFloat(compra.total_compra || 0);
+
+    return [
+      index + 1,
+      compra.numerocompra || "SIN COMPROBANTE",
+      compra.fecha_compra || "",
+      compra.usuario || "",
+      compra.proveedor || "",
+      compra.cantidad_productos || 0,
+      compra.unidades_compradas || 0,
+      subtotal.toFixed(2),
+      descuento.toFixed(2),
+      total.toFixed(2),
+    ];
+  });
 
   autoTable(doc, {
     startY: 65,
     head: [tableColumn],
     body: tableRows,
     theme: "grid",
-    headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: "bold" },
-    styles: { fontSize: 10 },
-    margin: { left: 10, right: 10 },
+    headStyles: {
+      fillColor: [41, 128, 185],
+      textColor: 255,
+      fontStyle: "bold",
+    },
+    styles: { fontSize: 9, cellPadding: 3 },
     columnStyles: {
+      0: { halign: "center", cellWidth: 8 },
       4: { halign: "center" },
       5: { halign: "center" },
       6: { halign: "right" },
+      7: { halign: "right" },
+      8: { halign: "right" },
     },
+    margin: { left: 10, right: 10 },
   });
 
   // ========================
   // TOTAL GENERAL
   // ========================
   const finalY = doc.lastAutoTable.finalY || 80;
+
   const totalGeneral = reporte
     .reduce((sum, compra) => sum + parseFloat(compra.total_compra || 0), 0)
     .toFixed(2);
@@ -102,5 +126,6 @@ export const exportarPDFCompras = (reporte, logoBase64, fechaInicio, fechaFin) =
   // ========================
   // GUARDAR PDF
   // ========================
-  doc.save(`Reporte_Compras_${new Date().toLocaleDateString().replace(/\//g, "-")}.pdf`);
+  const fechaActual = new Date().toLocaleDateString("es-GT").replace(/\//g, "-");
+  doc.save(`Reporte_Compras_${fechaActual}.pdf`);
 };

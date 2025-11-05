@@ -62,7 +62,7 @@ const ReporteCajas = () => {
 
   return (
     <div className="container mt-4">
-      <h3 className="text-center mb-4">📊 Reporte / Historial de Cajas</h3>
+      <h3 className="text-center mb-4">Reporte / Historial de Cajas</h3>
 
       {/* Filtros */}
       <div className="card p-3 mb-4 shadow-sm">
@@ -87,10 +87,10 @@ const ReporteCajas = () => {
           </div>
           <div className="col-md-4 d-flex gap-2">
             <button className="btn btn-primary w-50" onClick={filtrarPorFechas}>
-              🔍 Buscar
+              Filtrar
             </button>
             <button className="btn btn-danger w-50" onClick={generarPDF}>
-              📄 Descargar PDF
+              Exportar PDF
             </button>
           </div>
         </div>

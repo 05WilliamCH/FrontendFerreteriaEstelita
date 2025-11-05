@@ -19,9 +19,9 @@ export const generarPDFCompra = (compra, logoBase64) => {
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
-  doc.text("NIT: 12345678", 50, 27);
+  // doc.text("NIT: 12345678", 50, 27);
   doc.text("Dirección: Caserío Cooperativa, Aldea El Tablón, Sololá", 50, 32);
-  doc.text("Tel: (502) 1234-5678", 50, 37);
+  doc.text("Tel: (502) 5436-3645", 50, 37);
   doc.text("Correo: contacto@laestelita.com", 50, 42);
 
   // -----------------------------

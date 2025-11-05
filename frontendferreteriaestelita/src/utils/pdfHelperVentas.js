@@ -21,9 +21,9 @@ export const exportarPDFVentas = (reporte, logoBase64, fechaInicio, fechaFin) =>
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
-  doc.text("NIT: 12345678-9", pageWidth / 2, 26, { align: "center" });
+  // doc.text("NIT: 12345678-9", pageWidth / 2, 26, { align: "center" });
   doc.text("Dirección: Caserío Cooperativa, Aldea El Tablón", pageWidth / 2, 31, { align: "center" });
-  doc.text("Tel: (502) 1234-5678 | Email: contacto@laestelita.com", pageWidth / 2, 36, { align: "center" });
+  doc.text("Tel: (502) 5436-3645 | Email: contacto@laestelita.com", pageWidth / 2, 36, { align: "center" });
 
   // ========================
   // TÍTULO DEL REPORTE
@@ -45,6 +45,7 @@ export const exportarPDFVentas = (reporte, logoBase64, fechaInicio, fechaFin) =>
   // ========================
   const tableColumn = [
     "#",
+    "No. Venta",
     "Fecha",
     "Cliente",
     "Usuario (Vendedor)",
@@ -55,6 +56,7 @@ export const exportarPDFVentas = (reporte, logoBase64, fechaInicio, fechaFin) =>
 
   const tableRows = reporte.map((venta, index) => [
     index + 1,
+    venta.numerofactura || "SIN FACTURA",
     venta.fecha_venta,
     venta.cliente || "",
     venta.usuario || "",

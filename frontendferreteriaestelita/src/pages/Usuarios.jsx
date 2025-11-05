@@ -142,7 +142,7 @@ const Usuarios = () => {
             <th>Teléfono</th>
             <th>Rol</th>
             <th>Estado</th>
-            <th>Acciones</th>
+            <th>Accion</th>
           </tr>
         </thead>
         <tbody>
@@ -170,12 +170,12 @@ const Usuarios = () => {
                   >
                     Editar
                   </button>
-                  <button
+                  {/* <button
                     className="btn btn-sm btn-danger"
                     onClick={() => handleEliminar(u.idusuario)}
                   >
                     Eliminar
-                  </button>
+                  </button> */}
                 </td>
               </tr>
             ))

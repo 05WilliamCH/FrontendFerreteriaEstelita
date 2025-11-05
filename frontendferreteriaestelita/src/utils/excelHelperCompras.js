@@ -11,6 +11,7 @@ export const exportarExcelCompras = (reporte) => {
     "#": index + 1,
     Fecha: compra.fecha_compra,
     Usuario: compra.usuario,
+    "No. Compra": compra.numerocompra || "SIN COMPROBANTE",
     "Cantidad Productos": compra.cantidad_productos,
     "Unidades Compradas": compra.unidades_compradas,
     "Total Q.": parseFloat(compra.total_compra).toFixed(2),

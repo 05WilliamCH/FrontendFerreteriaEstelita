@@ -5,6 +5,9 @@ import jsPDF from "jspdf";
 import "jspdf-autotable";
 import axios from "axios";
 import useAuth from "../hooks/useAuth"; // ✅ Importa tu hook
+import { generarPDFKardex } from "../utils/pdfKardex";
+import logo from "../assets/ESTELITA.jpeg"; // si tienes un logo en tu proyecto
+
 
 const Kardex = () => {
   const [filtros, setFiltros] = useState({
@@ -59,49 +62,11 @@ const Kardex = () => {
     }
   };
 
-  // === EXPORTAR A PDF ===
-  const generarPDF = () => {
-    const doc = new jsPDF("l", "pt", "a4");
-    doc.text("📦 Reporte de Kardex de Movimientos", 200, 30);
-
-    doc.autoTable({
-      startY: 50,
-      head: [
-        [
-          "Código",
-          "Producto",
-          "Categoría",
-          "Fecha",
-          "Usuario",
-          "Movimiento",
-          "Cantidad",
-          "Precio",
-          "Total",
-          "Stock",
-        ],
-      ],
-      body: kardex.map((item) => [
-        item.codigo,
-        item.producto,
-        item.categoria,
-        new Date(item.fecha_movimiento).toLocaleString(),
-        item.usuario,
-        item.tipo_movimiento,
-        item.cantidad,
-        `Q${Number(item.precio).toFixed(2)}`,
-        `Q${Number(item.total).toFixed(2)}`,
-        item.stock,
-      ]),
-    });
-
-    doc.save("Kardex_Avanzado.pdf");
-  };
-
   return (
     <div className="container mt-4">
       <Card className="shadow p-4 border-0">
         <Card.Title className="text-center mb-4 fs-4 fw-bold text-primary">
-          📋 Kardex de Movimientos
+          Kardex de Movimientos
         </Card.Title>
 
         {/* ==== FILTROS ==== */}
@@ -168,14 +133,14 @@ const Kardex = () => {
 
         <div className="d-flex justify-content-end gap-2 mb-3">
           <Button variant="primary" onClick={handleBuscar}>
-            🔍 Buscar
+          Buscar
           </Button>
           <Button
             variant="success"
-            onClick={generarPDF}
+            onClick={() => generarPDFKardex(kardex, filtros, logo)}
             disabled={!kardex.length}
           >
-            📄 Exportar PDF
+          Exportar PDF
           </Button>
         </div>
 
@@ -194,10 +159,11 @@ const Kardex = () => {
               <th>Fecha</th>
               <th>Usuario</th>
               <th>Movimiento</th>
+              <th>Número Doc.</th>
               <th>Cantidad</th>
               <th>Precio</th>
-              <th>Total</th>
-              <th>Stock</th>
+              {/* <th>Total</th> */}
+              <th>Stock Disp.</th>
             </tr>
           </thead>
           <tbody>
@@ -224,9 +190,10 @@ const Kardex = () => {
                   >
                     {item.tipo_movimiento}
                   </td>
+                  <td>{item.numerodocumento || item.numerofactura || "—"}</td>
                   <td>{item.cantidad}</td>
                   <td>Q{Number(item.precio).toFixed(2)}</td>
-                  <td>Q{Number(item.total).toFixed(2)}</td>
+                  {/* <td>Q{Number(item.total).toFixed(2)}</td> */}
                   <td>{item.stock}</td>
                 </tr>
               ))

@@ -72,6 +72,7 @@ const RVentas = () => {
         <thead>
           <tr>
             <th>#</th>
+            <th>No. Venta</th>
             <th>Fecha</th>
             <th>Cliente</th>
             <th>Usuario (Vendedor)</th>
@@ -84,6 +85,7 @@ const RVentas = () => {
           {reporte.map((venta, index) => (
             <tr key={venta.idventa}>
               <td>{index + 1}</td>
+              <td>{venta.numerofactura || "SIN FACTURA"}</td>
               <td>{venta.fecha_venta}</td>
               <td>{venta.cliente}</td>
               <td>{venta.usuario}</td>

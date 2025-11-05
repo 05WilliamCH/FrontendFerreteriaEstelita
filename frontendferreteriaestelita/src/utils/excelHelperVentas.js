@@ -18,6 +18,7 @@ export const exportarExcelVentas = (reporte, fechaInicio, fechaFin) => {
     "#": index + 1,
     Fecha: venta.fecha_venta,
     Cliente: venta.cliente,
+    "No. Venta": venta.numerofactura || "SIN FACTURA",
     "Usuario (Vendedor)": venta.usuario,
     "Cantidad Productos": venta.cantidad_productos,
     "Unidades Vendidas": venta.unidades_vendidas,
