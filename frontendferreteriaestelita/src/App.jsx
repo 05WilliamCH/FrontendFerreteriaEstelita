@@ -12,7 +12,6 @@ import Login from "./pages/Login";
 import Proveedores from "./pages/Proveedores";
 import Clientes from "./pages/Cliente";
 import Categorias from "./pages/Categorias";
-import Devoluciones from "./pages/Devoluciones";
 
 import Compra from "./pages/Compra";
 import CompraDetalle from "./pages/CompraDetalle";
@@ -39,6 +38,9 @@ import Reportes from "./pages/Reportes";
 
 import ReporteCompras from "./pages/RCompras";
 import ReporteVentas from "./pages/RVentas";
+
+import DevolucionCompra from "./pages/DevolucionCompra";
+import DevolucionVenta from "./pages/DevolucionVenta";
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
@@ -206,18 +208,6 @@ function App() {
           }
         />
         <Route
-          path="/ventas/devoluciones"
-          element={
-            <PrivateRoute
-              element={
-                <DashboardLayout>
-                  <Devoluciones />
-                </DashboardLayout>
-              }
-            />
-          }
-        />
-        <Route
           path="/ventas/registro"
           element={
             <PrivateRoute
@@ -362,6 +352,32 @@ function App() {
               element={
                 <DashboardLayout>
                   <CompraDetalle />
+                </DashboardLayout>
+              }
+            />
+          }
+        />
+
+        <Route
+          path="/compras/DCompra"
+          element={
+            <PrivateRoute
+              element={
+                <DashboardLayout>
+                  <DevolucionCompra />
+                </DashboardLayout>
+              }
+            />
+          }
+        />
+
+        <Route
+          path="/ventas/DVentas"
+          element={
+            <PrivateRoute
+              element={
+                <DashboardLayout>
+                  <DevolucionVenta />
                 </DashboardLayout>
               }
             />

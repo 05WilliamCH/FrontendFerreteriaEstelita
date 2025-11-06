@@ -182,6 +182,11 @@ const Sidebar = () => {
                   Compra de Productos
                 </Link>
               </li>
+              <li>
+                <Link to="/compras/DCompra" className="nav-link text-white ms-4">
+                  Devolución de Compra
+                </Link>
+              </li>
             </ul>
           </div>
         </li>
@@ -213,13 +218,13 @@ const Sidebar = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/ventas/devoluciones" className="nav-link text-white ms-4">
-                  Devoluciones
+                <Link to="/ventas/registro" className="nav-link text-white ms-4">
+                  Registro de Ventas
                 </Link>
               </li>
               <li>
-                <Link to="/ventas/registro" className="nav-link text-white ms-4">
-                  Registro de Ventas
+                <Link to="/ventas/DVentas" className="nav-link text-white ms-4">
+                  Devolución de Ventas
                 </Link>
               </li>
             </ul>
