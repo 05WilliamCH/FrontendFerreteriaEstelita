@@ -8,6 +8,7 @@ import {
   Card,
   Spinner,
 } from "react-bootstrap";
+import Swal from "sweetalert2";
 import {
   obtenerVentaPorNumero,
   crearDevolucionVenta,
@@ -25,7 +26,7 @@ const DevolucionVenta = () => {
   // ==========================
   const buscarVenta = async () => {
     if (!numeroFactura.trim()) {
-      alert("Ingrese el número de factura");
+      Swal.fire("Atención", "Ingrese el número de factura.", "warning");
       return;
     }
 
@@ -35,11 +36,10 @@ const DevolucionVenta = () => {
       const { venta, detalle } = response.data;
 
       if (!venta) {
-        alert("Factura no encontrada");
+        Swal.fire("No encontrado", "Factura no encontrada.", "error");
         return;
       }
 
-      // Agregamos campo cantidadDevolver por defecto 0
       const productosConCampo = detalle.map((p) => ({
         ...p,
         cantidadDevolver: 0,
@@ -49,7 +49,7 @@ const DevolucionVenta = () => {
       setProductos(productosConCampo);
     } catch (error) {
       console.error("Error al buscar la factura:", error);
-      alert("Factura no encontrada o error en el servidor");
+      Swal.fire("Error", "Factura no encontrada o error en el servidor.", "error");
     } finally {
       setCargando(false);
     }
@@ -75,21 +75,19 @@ const DevolucionVenta = () => {
   // ==========================
   const guardarDevolucion = async () => {
     if (!venta) {
-      alert("Primero busque una venta");
+      Swal.fire("Advertencia", "Primero busque una venta.", "warning");
       return;
     }
 
-    const productosDevolver = productos.filter(
-      (p) => p.cantidadDevolver > 0
-    );
+    const productosDevolver = productos.filter((p) => p.cantidadDevolver > 0);
 
     if (productosDevolver.length === 0) {
-      alert("Debe ingresar al menos un producto a devolver");
+      Swal.fire("Atención", "Debe ingresar al menos un producto a devolver.", "warning");
       return;
     }
 
     if (!motivo.trim()) {
-      alert("Debe indicar el motivo de la devolución");
+      Swal.fire("Atención", "Debe indicar el motivo de la devolución.", "warning");
       return;
     }
 
@@ -105,13 +103,34 @@ const DevolucionVenta = () => {
       })),
     };
 
+    // Confirmación antes de registrar
+    const confirmacion = await Swal.fire({
+      title: "¿Registrar devolución?",
+      text: "Se guardará la devolución de esta venta.",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Sí, guardar",
+      cancelButtonText: "Cancelar",
+      confirmButtonColor: "#198754",
+    });
+
+    if (!confirmacion.isConfirmed) return;
+
     try {
       await crearDevolucionVenta(data);
-      alert("✅ Devolución registrada correctamente");
+
+      Swal.fire({
+        title: "Éxito",
+        text: "Devolución registrada correctamente.",
+        icon: "success",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+
       limpiarFormulario();
     } catch (error) {
       console.error("Error al guardar la devolución:", error);
-      alert("❌ Error al registrar la devolución");
+      Swal.fire("Error", "Error al registrar la devolución.", "error");
     }
   };
 
@@ -125,9 +144,6 @@ const DevolucionVenta = () => {
     setMotivo("");
   };
 
-  // ==========================
-  // RENDERIZADO
-  // ==========================
   return (
     <Card className="p-4 shadow-lg border-0">
       <h3 className="text-center mb-4">Devolución de Venta</h3>
@@ -137,7 +153,6 @@ const DevolucionVenta = () => {
         <Col md={6}>
           <Form.Control
             type="text"
-            className="form-control me-2"
             placeholder="Ingrese número de factura..."
             value={numeroFactura}
             onChange={(e) => setNumeroFactura(e.target.value)}
@@ -167,12 +182,10 @@ const DevolucionVenta = () => {
             <strong>Total:</strong> Q.{" "}
             {venta.totalventa
               ? venta.totalventa
-              : productos.reduce(
-                  (sum, p) => sum + p.cantidad * p.precio_venta,
-                  0
-                ).toFixed(2)}
+              : productos
+                  .reduce((sum, p) => sum + p.cantidad * p.precio_venta, 0)
+                  .toFixed(2)}
           </div>
-
 
           <Table striped bordered hover responsive>
             <thead>

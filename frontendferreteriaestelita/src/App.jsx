@@ -41,6 +41,7 @@ import ReporteVentas from "./pages/RVentas";
 
 import DevolucionCompra from "./pages/DevolucionCompra";
 import DevolucionVenta from "./pages/DevolucionVenta";
+import ReporteDevoluciones from "./pages/RDevoluciones";
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
@@ -378,6 +379,19 @@ function App() {
               element={
                 <DashboardLayout>
                   <DevolucionVenta />
+                </DashboardLayout>
+              }
+            />
+          }
+        />
+
+        <Route
+          path="/reportes/rdevoluciones"
+          element={
+            <PrivateRoute
+              element={
+                <DashboardLayout>
+                  <ReporteDevoluciones />
                 </DashboardLayout>
               }
             />
