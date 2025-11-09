@@ -11,7 +11,7 @@ const ReporteCategoriasPDF = () => {
   useEffect(() => {
     const token = localStorage.getItem("token");
 
-    fetch("http://localhost:3000/api/categorias", {
+    fetch(`${import.meta.env.VITE_API_URL}/categorias`, {
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`,

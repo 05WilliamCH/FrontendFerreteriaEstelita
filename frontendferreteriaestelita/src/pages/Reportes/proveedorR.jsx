@@ -11,7 +11,7 @@ const ReporteProveedoresPDF = () => {
   useEffect(() => {
     const token = localStorage.getItem("token");
 
-    fetch("http://localhost:3000/api/proveedores", {
+    fetch(`${import.meta.env.VITE_API_URL}/proveedores`, {
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`,
