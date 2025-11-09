@@ -34,8 +34,8 @@ const Kardex = () => {
         };
 
         const [catRes, userRes] = await Promise.all([
-          axios.get("http://localhost:3000/api/categorias", headers),
-          axios.get("http://localhost:3000/api/usuarios", headers),
+          axios.get(`${import.meta.env.VITE_API_URL}/categorias`, headers),
+          axios.get(`${import.meta.env.VITE_API_URL}/usuarios`, headers),
         ]);
 
         setCategorias(catRes.data);

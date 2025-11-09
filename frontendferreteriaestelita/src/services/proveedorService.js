@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:3000/api/proveedores";
+const API_URL = `${import.meta.env.VITE_API_URL}/proveedores`;
 
 // Obtener todos los proveedores
 export const obtenerProveedores = async () => {

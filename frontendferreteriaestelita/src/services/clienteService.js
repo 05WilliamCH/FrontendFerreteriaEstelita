@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:3000/api/clientes";
+const API_URL = `${import.meta.env.VITE_API_URL}/clientes`;
 
 // Obtener todos los clientes
 export const obtenerClientes = async () => {

@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:3000/api/caja"; // Ajusta si tu backend usa otro puerto
+const API_URL = `${import.meta.env.VITE_API_URL}/caja`; // Ajusta si tu backend usa otro puerto
 
 // Abrir caja
 export const abrirCaja = async (data) => {

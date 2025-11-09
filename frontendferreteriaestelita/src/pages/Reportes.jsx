@@ -27,10 +27,10 @@ const Reportes = () => {
     const fetchData = async () => {
       try {
         const [catRes, prodRes, cliRes, provRes] = await Promise.all([
-          axios.get("http://localhost:3000/api/categorias"),
-          axios.get("http://localhost:3000/api/productos"),
-          axios.get("http://localhost:3000/api/clientes"),
-          axios.get("http://localhost:3000/api/proveedores"),
+          axios.get(`${import.meta.env.VITE_API_URL}/categorias`),
+          axios.get(`${import.meta.env.VITE_API_URL}/productos`),
+          axios.get(`${import.meta.env.VITE_API_URL}/clientes`),
+          axios.get(`${import.meta.env.VITE_API_URL}/proveedores`),
         ]);
 
         setCategorias(catRes.data);
@@ -60,7 +60,7 @@ const Reportes = () => {
         stock,
       };
 
-      const res = await axios.post("http://localhost:3000/api/reportes", filtros);
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/reportes`, filtros);
       setReporte(res.data); // suponiendo que el backend devuelve un array con datos
     } catch (err) {
       console.error("Error generando reporte:", err);
@@ -83,7 +83,7 @@ const Reportes = () => {
         stock,
       };
 
-      const res = await axios.post("http://localhost:3000/api/reportes/pdf", filtros, {
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/reportes/pdf`, filtros, {
         responseType: "blob",
       });
 

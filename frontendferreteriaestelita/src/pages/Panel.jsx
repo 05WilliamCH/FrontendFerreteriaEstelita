@@ -27,7 +27,7 @@ const ModernDashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch("http://localhost:3000/api/dashboard/datos");
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/dashboard/datos`);
         const data = await res.json();
 
         setTotales({

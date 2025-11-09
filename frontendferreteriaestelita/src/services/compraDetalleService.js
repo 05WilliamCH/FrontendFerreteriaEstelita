@@ -1,7 +1,7 @@
 // src/services/compraService.js
 import axios from "axios";
 
-const API_URL = "http://localhost:3000/api/compras"; // ✅ tu backend de compras
+const API_URL = `${import.meta.env.VITE_API_URL}/compras`; // ✅ tu backend de compras
 
 // Obtener detalle de compra (por ID o número de compra)
 export const obtenerDetalleCompra = async (codigo) => {

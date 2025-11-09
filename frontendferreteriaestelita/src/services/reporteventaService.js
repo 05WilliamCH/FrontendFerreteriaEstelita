@@ -2,7 +2,7 @@
 // SERVICIO: REPORTE DE VENTAS
 // ========================
 
-const API_URL = "http://localhost:3000/api/reporteventas";
+const API_URL = `${import.meta.env.VITE_API_URL}/reporteventas`;
 
 // Obtener todas las ventas (sin filtro)
 export const obtenerReporteVentas = async () => {

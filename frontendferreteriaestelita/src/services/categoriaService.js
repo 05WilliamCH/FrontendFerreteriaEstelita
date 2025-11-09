@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:3000/api/categorias"; // Ajusta la URL según tu backend
+const API_URL = `${import.meta.env.VITE_API_URL}/categorias`; // Ajusta la URL según tu backend
 
 // Obtener todas las categorías
 export const obtenerCategorias = async () => {

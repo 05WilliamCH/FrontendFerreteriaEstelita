@@ -272,10 +272,13 @@ const Compra = () => {
     });
   };
 
+// URL dinámica según entorno
+const API_URL = import.meta.env.VITE_API_URL;
+
   const handleGuardarCompra = async () => {
     try {
       const idusuario = localStorage.getItem("idusuario");
-      const res = await axios.post("http://localhost:3000/api/compras", {
+      const res = await axios.post(`${API_URL}/compras`, {
         idprov: proveedor,
         idusuario,
         fecha: fechaCompra,
@@ -307,6 +310,12 @@ const Compra = () => {
     } catch (e) {
       console.error("Error guardar compra:", e);
       setAlertCompra("No se pudo registrar la compra.");
+      
+      Swal.fire({
+      title: "Error",
+      text: "No se pudo registrar la compra. Verifica los datos o la conexión.",
+      icon: "error",
+    });
     }
   };
 
